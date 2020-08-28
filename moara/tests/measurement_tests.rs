@@ -1,11 +1,10 @@
 #[cfg(test)]
-mod test_tools;
-
 extern crate moara;
 extern crate num_complex;
 
 use num_complex::Complex32;
 use moara::statevector::Statevector;
+use moara::measurement;
 
 #[test]
 fn measure_state0_returns0() {
@@ -13,7 +12,7 @@ fn measure_state0_returns0() {
     {
         data:vec![Complex32::new(1.0,0.0), Complex32::new(0.0,0.0)]
     };
-    assert_eq!(0, moara::measure(&statevector));
+    assert_eq!(0, measurement::measure(&statevector));
 }
 
 #[test]
@@ -22,7 +21,7 @@ fn measure_state1_returns1() {
     {
         data:vec![Complex32::new(0.0,0.0), Complex32::new(1.0,0.0)]
     };
-    assert_eq!(1, moara::measure(&statevector));
+    assert_eq!(1, measurement::measure(&statevector));
 }
 
 #[test]
@@ -34,9 +33,9 @@ fn measure_state_plus_returns_equal_probabilities() {
         data:vec![amplitude0, amplitude1]
     };
 
-    let sums = (0..1000).map(|_| moara::measure(&statevector))
+    let sums = (0..1000).map(|_| measurement::measure(&statevector))
                         .fold((0,0), |sum,x| if x == 0 {(sum.0+1,sum.1)} else {(sum.0,sum.1+1)});
-    assert!(test_tools::aprox_equals(sums.0, sums.1, 0.1));
+    assert!(aprox_equals(sums.0, sums.1, 0.1));
 }
 
 #[test]
@@ -48,9 +47,9 @@ fn measure_state_minus_returns_equal_probabilities() {
         data:vec![amplitude0, amplitude1]
     };
 
-    let sums = (0..1000).map(|_| moara::measure(&statevector))
+    let sums = (0..1000).map(|_| measurement::measure(&statevector))
                         .fold((0,0), |sum,x| if x == 0 {(sum.0+1,sum.1)} else {(sum.0,sum.1+1)});
-    assert!(test_tools::aprox_equals(sums.0, sums.1, 0.1));
+    assert!(aprox_equals(sums.0, sums.1, 0.1));
 }
 
 #[test]
@@ -62,9 +61,9 @@ fn measure_state_right_circ_returns_equal_probabilities() {
         data:vec![amplitude0, amplitude1]
     };
 
-    let sums = (0..1000).map(|_| moara::measure(&statevector))
+    let sums = (0..1000).map(|_| measurement::measure(&statevector))
                         .fold((0,0), |sum,x| if x == 0 {(sum.0+1,sum.1)} else {(sum.0,sum.1+1)});
-    assert!(test_tools::aprox_equals(sums.0, sums.1, 0.1));
+    assert!(aprox_equals(sums.0, sums.1, 0.1));
 }
 
 #[test]
@@ -76,9 +75,9 @@ fn measure_state_left_circ_returns_equal_probabilities() {
         data:vec![amplitude0, amplitude1]
     };
 
-    let sums = (0..1000).map(|_| moara::measure(&statevector))
+    let sums = (0..1000).map(|_| measurement::measure(&statevector))
                         .fold((0,0), |sum,x| if x == 0 {(sum.0+1,sum.1)} else {(sum.0,sum.1+1)});
-    assert!(test_tools::aprox_equals(sums.0, sums.1, 0.1));
+    assert!(aprox_equals(sums.0, sums.1, 0.1));
 }
 
 #[test]
@@ -92,9 +91,9 @@ fn measure_given_state_returns_correct_probabilities() {
         data:vec![amplitude0, amplitude1]
     };
 
-    let sums = (0..1000).map(|_| moara::measure(&statevector))
+    let sums = (0..1000).map(|_| measurement::measure(&statevector))
                         .fold((0,0), |sum,x| if x == 0 {(sum.0+1,sum.1)} else {(sum.0,sum.1+1)});
-    assert!(test_tools::check_distribution([sums.0, sums.1], [one_third, two_thirds], 0.1));
+    assert!(check_distribution([sums.0, sums.1], [one_third, two_thirds], 0.1));
 }
 
 #[test]
@@ -108,9 +107,9 @@ fn measure_given_imaginary_state_returns_correct_probabilities() {
         data:vec![amplitude0, amplitude1]
     };
 
-    let sums = (0..1000).map(|_| moara::measure(&statevector))
+    let sums = (0..1000).map(|_| measurement::measure(&statevector))
                         .fold((0,0), |sum,x| if x == 0 {(sum.0+1,sum.1)} else {(sum.0,sum.1+1)});
-    assert!(test_tools::check_distribution([sums.0, sums.1], [one_third, two_thirds], 0.1));
+    assert!(check_distribution([sums.0, sums.1], [one_third, two_thirds], 0.1));
 }
 
 #[test]
@@ -126,7 +125,25 @@ fn measure_given_random_state_returns_correct_probabilities() {
         data:vec![amplitude0, amplitude1]
     };
 
-    let sums = (0..1000).map(|_| moara::measure(&statevector))
+    let sums = (0..1000).map(|_| measurement::measure(&statevector))
                         .fold((0,0), |sum,x| if x == 0 {(sum.0+1,sum.1)} else {(sum.0,sum.1+1)});
-    assert!(test_tools::check_distribution([sums.0, sums.1], [0.3_f32, 0.7_f32], 0.1));
+    assert!(check_distribution([sums.0, sums.1], [0.3_f32, 0.7_f32], 0.05));
+}
+
+pub fn aprox_equals(a:i32, b:i32, fraction:f32) -> bool
+{
+    let diff = (b-a).abs();
+    let sum = (b+a).abs();
+
+    (diff as f32) <= (sum as f32) * fraction
+}
+
+pub fn check_distribution(counts:[i32;2], distribution:[f32;2], tolerance:f32) -> bool
+{
+    let sum = (counts[0]+counts[1]).abs();
+    let prob0 = counts[0] as f32/sum as f32;
+    let prob1 = counts[1] as f32/sum as f32;
+
+    (distribution[0]-prob0).abs() < tolerance 
+      && (distribution[1]-prob1).abs() < tolerance
 }
