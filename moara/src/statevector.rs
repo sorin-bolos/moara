@@ -1,33 +1,34 @@
 extern crate num_complex;
-mod tools;
 
 use num_complex::Complex32;
+use crate::tools;
 
-struct Statevector 
+pub struct Statevector 
 {
-    let data:Vec<Complex32>;
+    pub data:Vec<Complex32>
 }
 
 impl Statevector
 {
-    fn new(data:Vec<Complex32>) -> Statevector {
+    pub fn new(data:Vec<Complex32>) -> Statevector {
 
-        if !is_unitary_vector(data)
+        if !is_unitary_vector(&data)
         {
             panic!("Vector is not unitary")
         }
 
         Statevector {
-            data = data
+            data:data
         }
-    };
+    }
 }
 
-fn is_unitary_vector(data:Vec<Complex32>) -> bool
+fn is_unitary_vector(data:&Vec<Complex32>) -> bool
 {
-    let sum = data.map(|amplitude| amplitude.norm())
+    let sum = data.into_iter()
+                  .map(|amplitude| amplitude.norm())
                   .map(|norm| norm*norm)
-                  .fold(0, |sum,squared_amplitudes| sum+squared_amplitudes);
+                  .fold(0.0, |sum,squared_amplitudes| sum+squared_amplitudes);
 
     tools::equals(sum, 1.0)
 }
