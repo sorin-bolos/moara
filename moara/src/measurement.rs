@@ -9,7 +9,7 @@ pub fn measure(statevector:&Statevector) -> usize
     let mut rng = rand::thread_rng();
     let sample:f32 = rng.gen();
 
-    let probabilities = statevector.data.iter()
+    let probabilities = statevector.data().iter()
         .map(|amplitude| amplitude.norm())
         .map(|norm| norm*norm);
 
