@@ -27,8 +27,21 @@ impl Operator
     {
         &self.data
     }
-
-    pub fn dot(&self, other:Self) -> Self
+    pub fn unit(size:usize)->Self{
+        let mut result = vec![vec![Complex32::new(0.0, 0.0); size];size];
+        for i in 0..size{
+            result[i][i]=Complex32::new(1.0, 0.0)
+        }
+        Operator{
+            data:result,
+        }
+    }
+    pub fn print(&self){
+        for i in 0..self.data.len(){
+            println!("{:?}",&self.data()[i]);
+        }
+    }
+    pub fn dot(&self, other:&Self) -> Self
     {
         let len = self.data.len();
 
@@ -55,7 +68,7 @@ impl Operator
         }
     }
 
-    pub fn tensor(&self, other:Self) -> Self {
+    pub fn tensor(&self, other:&Self) -> Self {
         let self_len = self.data.len();
         let other_len = other.data.len();
         let new_len = self_len*other_len;
@@ -137,3 +150,4 @@ fn is_unitary_operator(data:&Vec<Vec<Complex32>>) -> bool
 
     return true;
 }
+
