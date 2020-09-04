@@ -1,0 +1,1 @@
+//Ma gandsesc sa fie o lista cu poti si faci dot intre ele si gata . In situatia ast as putea sa scot target de la porti. Doar la cele cu mai multi qbiti ar fi necesar . Dar ma rog mai intai cand aveti timp sa va uitati ce am gresit la swap ??
