@@ -9,46 +9,16 @@ use num_complex::Complex32;
 
 const MEASUREMENT: &str = "measure-z";
 
-// pub fn run(qubit_count:u8, circuit:Circuit) -> usize
-// {
-//     let (operator_option, measurements) = get_circuit_operator(qubit_count, circuit);
-//     match operator_option 
-//     {
-//         Some(circuit_operator) => return get_measurement_result(circuit_operator, measurements),
-//         None => return 0
-//     };
-// }
+pub fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
+{
+    let (final_statevector, measurements) = get_final_statevector(qubit_count, circuit);
 
-// fn get_circuit_operator(qubit_count:u8, circuit:Circuit) -> (Option<Operator>, Vec<bool>)
-// {
-//     let mut measurements = vec![false; qubit_count as usize];
+    (0..shots).map(|_| measure(&final_statevector))
+              .fold(vec![0u32;1<<qubit_count],
+                    |mut intermediate_results,measurement_result| {intermediate_results[measurement_result] += 1; intermediate_results})
+}
 
-//     let mut ordered_steps = circuit.steps;
-//     ordered_steps.sort_by(|a, b| b.index.cmp(&a.index));
-
-//     let mut circuit_operator = match ordered_steps.pop() 
-//     {
-//         Some(first_step) => get_step_operator(&mut measurements, first_step),
-//         None => return (None, measurements)
-//     };
-
-//     for step in ordered_steps
-//     {
-//         let step_operator = get_step_operator(&mut measurements, step);
-//         circuit_operator = circuit_operator.dot(step_operator);
-//     }
-
-//     (Some(circuit_operator), measurements)
-// }
-
-// fn get_measurement_result(circuit_operator:Operator, measurements:Vec<bool>) -> usize
-// {
-//     let a = &circuit_operator.data()[..][0]; //TODO: change to reference
-//     let final_statevector = Statevector::new(a.to_vec());
-//     measure(&final_statevector)
-// }
-
-fn get_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<bool>)
+fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<bool>)
 {
     let mut measurements = vec![false; qubit_count as usize];
 
@@ -96,20 +66,24 @@ fn get_step_operator(qubit_count:u8, measurements:&mut Vec<bool>, step:Step) -> 
 
     let mut qubit_index = 0;
 
-    let mut step_operator = match ordered_gates.pop() 
+    let mut step_operator = match get_first_non_measurement_gate_operator(measurements, &mut ordered_gates, &mut qubit_index) 
     {
-        Some(first_gate) => get_intermediate_step_operator(measurements, first_gate, &mut qubit_index),
+        Some(first_step_operator) => first_step_operator,
         None => return None
     };
+    
     for gate in ordered_gates
     {
-        let next_operator = get_intermediate_step_operator(measurements, gate, &mut qubit_index);
-        step_operator = step_operator.tensor(next_operator);
+        match get_intermediate_step_operator(measurements, gate, &mut qubit_index)
+        {
+            Some(next_operator) => step_operator = step_operator.tensor(next_operator),
+            None => {}
+        }
     }
 
-    if qubit_count >= qubit_index
+    if qubit_count > qubit_index
     {
-        step_operator = step_operator.tensor(get_identity(1 << (qubit_count-qubit_index+1)));
+        step_operator = step_operator.tensor(get_identity(1 << (qubit_count-qubit_index)));
     }
 
     Some(step_operator)
