@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "index": 0,
+      "gates": [
+        {
+          "name": "hadamard",
+          "target": 0
+        },
+		{
+          "name": "hadamard",
+          "target": 1
+        },
+		{
+          "name": "hadamard",
+          "target": 2
+        }
+      ]
+    }
+  ]
+}
