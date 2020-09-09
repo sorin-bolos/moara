@@ -57,7 +57,7 @@ fn dot_with_larger_matrix_panics() {
         vec![Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(1.0,0.0)]
     ]);
 
-    a.dot(b);
+    a.dot(&b);
 }
 
 #[test]
@@ -74,7 +74,7 @@ fn dot_with_smaller_matrix_panics() {
         vec![Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(1.0,0.0)]
     ]);
 
-    b.dot(a);
+    b.dot(&a);
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn dot_works() {
         vec![Complex32::new(0.0,0.0), Complex32::new(1.0,0.0)]
     ]);
 
-    let c = a.dot(b);
+    let c = a.dot(&b);
 
     assert!(operators_are_equal(i,c));
 }
@@ -118,7 +118,7 @@ fn tensor_same_size_works() {
         vec![Complex32::new(0.0,-1.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0)]
     ]);
 
-    let c = a.tensor(b);
+    let c = a.tensor(&b);
 
     assert!(operators_are_equal(expected,c));
 }
@@ -148,7 +148,7 @@ fn tensor_smaller_works() {
         vec![Complex32::new(0.0,0.0), Complex32::new(0.0,1.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0)],
     ]);
 
-    let c = a.tensor(b);
+    let c = a.tensor(&b);
 
     assert!(operators_are_equal(expected,c));
 }
@@ -178,7 +178,7 @@ fn tensor_greater_works() {
         vec![Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,1.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0), Complex32::new(0.0,0.0)],
     ]);
 
-    let c = a.tensor(b);
+    let c = a.tensor(&b);
 
     assert!(operators_are_equal(expected,c));
 }

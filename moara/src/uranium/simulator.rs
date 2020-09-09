@@ -76,14 +76,14 @@ fn get_step_operator(qubit_count:u8, measurements:&mut Vec<bool>, step:Step) -> 
     {
         match get_intermediate_step_operator(measurements, gate, &mut qubit_index)
         {
-            Some(next_operator) => step_operator = step_operator.tensor(next_operator),
+            Some(next_operator) => step_operator = step_operator.tensor(&next_operator),
             None => {}
         }
     }
 
     if qubit_count > qubit_index
     {
-        step_operator = step_operator.tensor(get_identity(1 << (qubit_count-qubit_index)));
+        step_operator = step_operator.tensor(&get_identity(1 << (&qubit_count-qubit_index)));
     }
 
     Some(step_operator)
@@ -121,7 +121,7 @@ fn get_intermediate_step_operator(measurements:&mut Vec<bool>, gate:Gate, qubit_
     let mut next_operator = get_operator(&gate.name);
     if gate.target > *qubit_index
     {
-        next_operator = get_identity(1 << (gate.target-*qubit_index)).tensor(next_operator);
+        next_operator = get_identity(1 << (gate.target-*qubit_index)).tensor(&next_operator);
     }
     *qubit_index = gate.target+1;
     
