@@ -1,3 +1,5 @@
+
+
 extern crate num_complex;
 
 use num_complex::Complex32;
@@ -34,9 +36,10 @@ pub fn hadamard() -> Operator {
 }
 
 pub fn u3_gate(theta:f32,phi:f32,lambda:f32) -> Operator {
+    println!("phi :{:?}",phi);
     Operator::new(vec![
-        vec![Complex32::new((theta).cos(),0.0),Complex32::new(-1.0*(lambda.cos())*(theta.sin()),0.0)+Complex32::new(0.0,-1.0*(lambda.sin())*(theta.sin()))],
-        vec![Complex32::new(phi.cos()*(theta.sin()),0.0)+Complex32::new(0.0,phi.sin()*(theta.sin())),Complex32::new((phi+lambda).cos()*(theta.cos()),0.0)+Complex32::new(0.0,(phi+lambda).cos()*(theta.sin()))]])
+        vec![Complex32::new((theta/2.0).cos(),0.0),Complex32::new(-1.0*(lambda.cos())*((theta/2.0).sin()),0.0)+Complex32::new(0.0,-1.0*(lambda.sin())*((theta/2.0).sin()))],
+        vec![Complex32::new(phi.cos()*((theta/2.0).sin()),0.0)+Complex32::new(0.0,phi.sin()*((theta/2.0).sin())),Complex32::new(((phi+lambda).cos())*((theta/2.0).cos()),0.0)+Complex32::new(0.0,((phi+lambda).sin())*((theta/2.0).cos()))]])
 }
 
 pub fn cx(qubit_span:u8, reversed:bool) -> Operator {

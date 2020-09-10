@@ -4,6 +4,8 @@ use num_complex::Complex32;
 macro_rules! C {
     ($re:tt+$im:tt*i) => (Complex32::new($re as f32, $im as f32));
     ($re:tt-$im:tt*i) => (Complex32::new($re as f32, -$im as f32));
+    (-$re:tt+$im:tt*i) => (Complex32::new($re as f32, $im as f32));
+    (-$re:tt-$im:tt*i) => (Complex32::new(-$re as f32, -$im as f32));
     ($re:tt) => (Complex32::new($re as f32, 0.0));
     (-$re:tt) => (Complex32::new(-$re as f32, 0.0));
     ($im:tt*i) => (Complex32::new(0.0, $im as f32));

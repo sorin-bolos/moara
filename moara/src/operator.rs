@@ -1,3 +1,7 @@
+
+#[macro_use]
+use crate::complex;
+
 extern crate num_complex;
 
 use num_complex::Complex32;
