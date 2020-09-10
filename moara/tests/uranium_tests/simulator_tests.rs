@@ -25,8 +25,8 @@ fn simple_circuit_works() {
 
       let results = run(1u8, circuit, 1000);
       assert_eq!(2, results.len());
-      assert!(aprox_equals(500, results[0], 0.01));
-      assert!(aprox_equals(500, results[1], 0.01));
+      assert!(aprox_equals(500, results[0], 0.1));
+      assert!(aprox_equals(500, results[1], 0.1));
 }
 
 pub fn aprox_equals(a:u32, b:u32, fraction:f32) -> bool

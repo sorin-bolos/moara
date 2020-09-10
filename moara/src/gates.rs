@@ -81,7 +81,7 @@ pub fn swap(qubit_span:u8) -> Operator {
             }
         } else {
             if i % 2 == 0 {
-                data[i][size/2+i+1] = Complex32::new(1.0,0.0);
+                data[i][i-size/2+1] = Complex32::new(1.0,0.0);
             } else {
                 data[i][i] = Complex32::new(1.0,0.0);
             }

@@ -5,3 +5,4 @@ pub mod measurement;
 pub mod uranium;
 pub mod vectors;
 pub mod gates;
+pub mod complex;

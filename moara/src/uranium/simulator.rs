@@ -11,7 +11,7 @@ const MEASUREMENT: &str = "measure-z";
 
 pub fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
 {
-    let (final_statevector, measurements) = get_final_statevector(qubit_count, circuit);
+    let (final_statevector, _measurements) = get_final_statevector(qubit_count, circuit);
 
     (0..shots).map(|_| measure(&final_statevector))
               .fold(vec![0u32;1<<qubit_count],
