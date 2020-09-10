@@ -1,5 +1,3 @@
-use num_complex::Complex32;
-
 #[macro_export]
 macro_rules! C {
     ($re:tt+$im:tt*i) => (Complex32::new($re as f32, $im as f32));

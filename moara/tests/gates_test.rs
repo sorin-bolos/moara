@@ -5,9 +5,7 @@ extern crate moara;
 extern crate num_complex;
 
 use num_complex::Complex32;
-use moara::operator::Operator;
 use moara::gates;
-use moara::complex;
 
 
 #[test]
