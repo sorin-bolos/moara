@@ -1,4 +1,5 @@
-
+#[macro_use]
+use crate::C;
 
 extern crate num_complex;
 
@@ -38,8 +39,8 @@ pub fn hadamard() -> Operator {
 pub fn u3_gate(theta:f32,phi:f32,lambda:f32) -> Operator {
     println!("phi :{:?}",phi);
     Operator::new(vec![
-        vec![Complex32::new((theta/2.0).cos(),0.0),Complex32::new(-1.0*(lambda.cos())*((theta/2.0).sin()),0.0)+Complex32::new(0.0,-1.0*(lambda.sin())*((theta/2.0).sin()))],
-        vec![Complex32::new(phi.cos()*((theta/2.0).sin()),0.0)+Complex32::new(0.0,phi.sin()*((theta/2.0).sin())),Complex32::new(((phi+lambda).cos())*((theta/2.0).cos()),0.0)+Complex32::new(0.0,((phi+lambda).sin())*((theta/2.0).cos()))]])
+        vec![C!((theta/2.0)),C!((-1.0*(lambda.cos())*((theta/2.0).sin()))-(1.0*(lambda.sin())*((theta/2.0).sin()))*i)],
+        vec![C!((phi.cos()*((theta/2.0).sin()))+(phi.sin()*((theta/2.0).sin()))*i),C!((((phi+lambda).cos())*((theta/2.0).cos()))+(((phi+lambda).sin())*((theta/2.0).cos()))*i)]])
 }
 
 pub fn cx(qubit_span:u8, reversed:bool) -> Operator {
