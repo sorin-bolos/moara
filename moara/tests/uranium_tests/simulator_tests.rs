@@ -6,7 +6,7 @@ use moara::uranium::circuit::Circuit;
 use moara::uranium::simulator::run;
 
 #[test]
-fn sun_simple_circuit_works() {
+fn simple_circuit_works() {
     let serialized = "{
         \"steps\": [
             {

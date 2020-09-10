@@ -4,4 +4,4 @@ pub mod statevector;
 pub mod measurement;
 pub mod uranium;
 pub mod vectors;
-pub mod gate;
+pub mod gates;
