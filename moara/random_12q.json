@@ -1,0 +1,82 @@
+{
+  "steps": [
+    {
+      "index": 3,
+      "gates": [
+        {
+          "name": "swap",
+          "target": 1,
+          "target2": 2
+        },
+        {
+          "name": "ctrl-pauli-x",
+          "target": 4,
+          "control": 5
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "gates": [
+        {
+          "name": "hadamard",
+          "target": 4
+        },
+        {
+          "name": "ctrl-pauli-x",
+          "target": 8,
+          "control": 9
+        },
+        {
+          "name": "swap",
+          "target": 10,
+          "target2": 11
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "gates": [
+        {
+          "name": "pauli-x",
+          "target": 0
+        },
+        {
+          "name": "ctrl-pauli-x",
+          "target": 2,
+          "control": 4
+        },
+        {
+          "name": "pauli-x",
+          "target": 5
+        },
+        {
+          "name": "swap",
+          "target": 6,
+          "target2": 7
+        },
+        {
+          "name": "pauli-y",
+          "target": 8
+        },
+        {
+          "name": "pauli-z",
+          "target": 9
+        },
+        {
+          "name": "pauli-z",
+          "target": 11
+        }
+      ]
+    },
+    {
+      "index": 0,
+      "gates": [
+        {
+          "name": "hadamard",
+          "target": 2
+        }
+      ]
+    }
+  ]
+}

@@ -110,11 +110,12 @@ fn get_intermediate_step_operator(measurements:&mut Vec<bool>, gate:Gate, qubit_
     }
 
     let mut next_operator = get_operator(&gate);
-    if gate.target > *qubit_index
+    let gate_min_index = gate.get_min_qubit_index();
+    if gate_min_index > *qubit_index
     {
-        next_operator = gates::identity(gate.target-*qubit_index).tensor(&next_operator);
+        next_operator = gates::identity(gate_min_index-*qubit_index).tensor(&next_operator);
     }
-    *qubit_index = gate.target+1;
+    *qubit_index = gate.get_max_qubit_index()+1;
     
     Some(next_operator)
 }
