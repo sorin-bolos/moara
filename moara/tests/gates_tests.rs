@@ -1,11 +1,14 @@
 #[cfg(test)]
 
-#[macro_use]
 extern crate moara;
 extern crate num_complex;
 
+use core::f32::consts::PI;
 use num_complex::Complex32;
+use moara::operator::Operator;
 use moara::gates;
+use moara::C;
+use moara::tools;
 
 
 
@@ -68,17 +71,23 @@ fn cx_gives_correct_opertator() {
 
 #[test]
 fn u3_gives_correct_opertator() {
-  let u3_1= gates::u3_gate(0.0,0.0,0.0);
-  println!("u3:{:?}",u3_1.data());
-  let expected_data_1= vec![
-    vec![ C!(1), C!(0)],
-    vec![ C!(0), C!(1)]];
- assert_eq!(&expected_data_1, u3_1.data());
+    let u3_1= gates::u3_gate(0.0,0.0,0.0);
+    let expected_data_1= vec![
+      vec![ C!(1), C!(0)],
+      vec![ C!(0), C!(1)]];
+    assert_eq!(&expected_data_1, u3_1.data());
+
+    let u3_2= gates::u3_gate(PI/2.0,-PI/2.0,PI/2.0);
+    let expected = Operator::new(vec![
+      vec![ C!((1.0/2_f32.sqrt())), C!((-1.0/2_f32.sqrt())*i)],
+      vec![ C!((-1.0/2_f32.sqrt())*i), C!((1.0/2_f32.sqrt()))]]);
+
+    assert!(operators_are_equal(expected, u3_2));
 }
 
 
-//#[test]
-//fn cu3_gives_correct_opertator() {
+// #[test]
+// fn cu3_gives_correct_opertator() {
 // let cu3_i = gates::cu3_gate(0,2,0.0,0.0,0.0);
 // let expected_data_i = vec![
 //   vec![ C!(1), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0)],
@@ -90,4 +99,25 @@ fn u3_gives_correct_opertator() {
 //   vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(1), C!(0)],
 //   vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(1)]];
 //   assert_eq!(&expected_data_i, cu3_i.data());
-//}
+// }
+
+fn operators_are_equal(a:Operator, b:Operator) -> bool
+{
+    if a.data().len() != b.data().len()
+    {
+        return false;
+    }
+
+    for i in 0..a.data().len()
+    {
+        for j in 0..a.data().len() 
+        {
+            if !(tools::equals(a.data()[i][j].re, b.data()[i][j].re) && tools::equals(a.data()[i][j].im, b.data()[i][j].im))
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
