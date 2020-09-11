@@ -1,42 +1,54 @@
 use std::env;
-use std::fs;
 use std::process;
-use std::error::Error;
 
-use moara::uranium;
+use moara;
 
-const INVALID_ARGUMENT_COUNT: &str = "Invalid number of arguments. Need to suply only one argument. Usage: 'moara.exe circuit.filename.json'";
+const USAGE:&str = "Usage: 'moara.exe circuit_filename.json 1024 4'";
+const INVALID_ARGUMENT_COUNT:&str = "Invalid number of arguments. Need to suply at least one argument.";
+const COULD_NOT_PARSE_SHOTS:&str = "Could not parse argument for 'shots'.";
+const COULD_NOT_PARSE_QUBIT_COUNT:&str = "Could not parse argument for 'qubit_count'.";
+const DEFAULT_SHOTS:u32 = 1024;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let circuit_file = parse_arguments(args).unwrap_or_else(|err| {
-        println!("{}", err);
-        process::exit(1);
-    });
-    
-    let serialized_circuit = read_file(circuit_file).unwrap_or_else(|err| {
-        println!("{}", err);
-        process::exit(1);
-    });
+    let config = parse_arguments(args);
 
-    let circuit: uranium::circuit::Circuit = serde_json::from_str(&serialized_circuit).unwrap();
-    let results = uranium::simulator::run(3, circuit, 1024);
+    let results = moara::simulate_with_uranium(config.circuit_filename, config.shots, config.qubit_count);
     print!("{:?}", results);
 }
 
-fn parse_arguments(input:Vec<String>) -> Result<String, &'static str>
+fn parse_arguments(input:Vec<String>) -> Config
 {
-    if input.len() != 2
+    if input.len() < 2
     {
-        return Err(INVALID_ARGUMENT_COUNT);
+        println!("{} {}", INVALID_ARGUMENT_COUNT, USAGE);
+        process::exit(1);
     }
 
-    Ok(input[1].clone())
+    let circuit_filename = input[1].clone();
+    let shots = match input.get(2) {
+        Some(shots_arg) => shots_arg.parse::<u32>().unwrap_or_else(|_| {
+            println!("{} {}", COULD_NOT_PARSE_SHOTS, USAGE);
+            process::exit(1);
+        }),
+        None => DEFAULT_SHOTS
+    };
+    let qubit_count = match input.get(3) {
+        Some(qubit_count_arg) => {
+            let parsed_qubit_count_arg = qubit_count_arg.parse::<u8>().unwrap_or_else(|_| {
+                println!("{} {}", COULD_NOT_PARSE_QUBIT_COUNT, USAGE);
+                process::exit(1);
+            });
+            Some(parsed_qubit_count_arg)
+        },
+        None => None
+    };
+
+    Config{circuit_filename:circuit_filename, shots:shots, qubit_count:qubit_count}
 }
 
-fn read_file(circuit_file:String) -> Result<String, Box<dyn Error>>
-{
-    let contents = fs::read_to_string(circuit_file)?;
-    
-    Ok(contents)
+struct Config {
+    circuit_filename:String,
+    shots:u32,
+    qubit_count:Option<u8>
 }

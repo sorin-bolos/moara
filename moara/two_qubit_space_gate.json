@@ -1,0 +1,31 @@
+{
+  "steps": [
+    {
+      "index": 2,
+      "gates": []
+    },
+    {
+      "index": 1,
+      "gates": [
+        {
+          "name": "ctrl-pauli-x",
+          "target": 1,
+          "control": 0
+        },
+        {
+          "name": "pauli-x",
+          "target": 3
+        }
+      ]
+    },
+    {
+      "index": 0,
+      "gates": [
+        {
+          "name": "hadamard",
+          "target": 0
+        }
+      ]
+    }
+  ]
+}

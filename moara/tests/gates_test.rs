@@ -1,11 +1,11 @@
 #[cfg(test)]
 
-#[macro_use]
 extern crate moara;
 extern crate num_complex;
 
 use num_complex::Complex32;
 use moara::gates;
+use moara::C;
 
 
 #[test]
