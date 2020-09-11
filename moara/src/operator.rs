@@ -116,8 +116,9 @@ fn is_unitary_operator(data:&Vec<Vec<Complex32>>) -> bool
             let mut elem = Complex32::new(0.0, 0.0);
             for k in 0..data[i].len()
             {
-                elem += data[i][k]*data[k][j];
+                elem += data[i][k]*data[j][k].conj();
             }
+
             if i == j
             {
                 if !(tools::equals(1.0, elem.re) && tools::equals(0.0, elem.im))

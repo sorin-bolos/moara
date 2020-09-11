@@ -1,5 +1,6 @@
 use num_complex::Complex32;
 use crate::operator::Operator;
+use crate::C;
 
 pub fn pauli_x() -> Operator {
     Operator::new(vec![
@@ -38,9 +39,10 @@ pub fn identity(qubit_count:u8) -> Operator {
 }
 
 pub fn u3_gate(theta:f32,phi:f32,lambda:f32) -> Operator {
+    let half_theta = theta/2f32;
     Operator::new(vec![
-        vec![Complex32::new((theta).cos(),0.0),Complex32::new(-1.0*(lambda.cos())*(theta.sin()),0.0)+Complex32::new(0.0,-1.0*(lambda.sin())*(theta.sin()))],
-        vec![Complex32::new(phi.cos()*(theta.sin()),0.0)+Complex32::new(0.0,phi.sin()*(theta.sin())),Complex32::new((phi+lambda).cos()*(theta.cos()),0.0)+Complex32::new(0.0,(phi+lambda).cos()*(theta.sin()))]])
+        vec![C!((half_theta.cos())), -1.0*C!(lambda*i).exp()*half_theta.sin()],
+        vec![C!(phi*i).exp()*half_theta.sin(), C!((phi+lambda)*i).exp()*half_theta.cos()]])
 }
 
 pub fn cx(qubit_span:u8, reversed:bool) -> Operator {
