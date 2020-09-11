@@ -9,8 +9,28 @@ use crate::gates;
 
 const MEASUREMENT: &str = "measure-z";
 
-pub fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
+pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) -> Vec<u32>
 {
+    let circuit: Circuit = serde_json::from_str(&serialized_circuit).unwrap();
+
+    let count = match qubit_count {
+        Some(working_qubit_count) => working_qubit_count,
+        None => get_qubit_count_from_circuit(&circuit)
+    };
+
+    run(count, circuit, shots)
+}
+
+fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
+{
+    if qubit_count == 0 {
+        return vec![];
+    }
+
+    if shots == 0 {
+        return vec![0; 1<<qubit_count];
+    }
+
     let (final_statevector, _measurements) = get_final_statevector(qubit_count, circuit);
 
     (0..shots).map(|_| measure(&final_statevector))
@@ -123,4 +143,18 @@ fn get_operator(gate:&Gate) -> Operator
         },
         nunknown_gate => panic!("Unknown operator {}", nunknown_gate)
     }
+}
+
+fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
+    let mut qubit_count = 0;
+
+    for step in &circuit.steps {
+        for gate in &step.gates {
+            if gate.target+1 > qubit_count {
+                qubit_count = gate.target+1;
+            }
+        }
+    }
+
+    qubit_count
 }
