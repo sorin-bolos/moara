@@ -1,13 +1,5 @@
-extern crate num_complex;
-
 use num_complex::Complex32;
 use crate::operator::Operator;
-
-pub fn idenity() -> Operator {
-    Operator::new(vec![
-        vec![Complex32::new(1.0,0.0),Complex32::new(0.0,0.0)],
-        vec![Complex32::new(0.0,0.0),Complex32::new(1.0,0.0)]])
-}
 
 pub fn pauli_x() -> Operator {
     Operator::new(vec![
@@ -31,6 +23,18 @@ pub fn hadamard() -> Operator {
     Operator::new(vec![
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)],
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0)]])
+}
+
+pub fn identity(qubit_count:u8) -> Operator {
+    let size = 1<<qubit_count;
+    let mut data = vec![vec![C!(0);size as usize];size as usize];
+
+    for i in 0..(size as usize)
+    {
+        data[i][i] = C!(1);
+    }
+
+    Operator::new(data)
 }
 
 pub fn u3_gate(theta:f32,phi:f32,lambda:f32) -> Operator {

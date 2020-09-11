@@ -19,5 +19,7 @@ pub struct Step
 pub struct Gate
 {
     pub name:String,
-    pub target:u8
+    pub target:u8,
+    pub target2:Option<u8>,
+    pub control:Option<u8>
 }
