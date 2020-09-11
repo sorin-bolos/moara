@@ -1,3 +1,6 @@
+#[macro_use]
+use crate::C;
+
 use num_complex::Complex32;
 use crate::operator::Operator;
 
@@ -39,8 +42,9 @@ pub fn identity(qubit_count:u8) -> Operator {
 
 pub fn u3_gate(theta:f32,phi:f32,lambda:f32) -> Operator {
     Operator::new(vec![
-        vec![Complex32::new((theta).cos(),0.0),Complex32::new(-1.0*(lambda.cos())*(theta.sin()),0.0)+Complex32::new(0.0,-1.0*(lambda.sin())*(theta.sin()))],
-        vec![Complex32::new(phi.cos()*(theta.sin()),0.0)+Complex32::new(0.0,phi.sin()*(theta.sin())),Complex32::new((phi+lambda).cos()*(theta.cos()),0.0)+Complex32::new(0.0,(phi+lambda).cos()*(theta.sin()))]])
+        vec![C!(((theta/2.0).cos())),C!((-1.0*(lambda.cos())*((theta/2.0).sin()))-(1.0*(lambda.sin())*((theta/2.0).sin()))*i)],
+        vec![C!((phi.cos()*((theta/2.0).sin()))+(phi.sin()*((theta/2.0).sin()))*i),C!((((phi+lambda).cos())*((theta/2.0).cos()))+(((phi+lambda).sin())*((theta/2.0).cos()))*i)]])
+
 }
 
 pub fn cx(qubit_span:u8, reversed:bool) -> Operator {
