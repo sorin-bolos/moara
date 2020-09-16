@@ -1,7 +1,7 @@
 [package]
 name = "moara"
 version = "0.1.0"
-authors = ["Sorin Bolos <sorinalbolos@yahoo.com>"]
+authors = ["Sorin Bolos <sorinalbolos@yahoo.com>", "Voicu Tomut <tomutvoicuandrei@gmail.com>"]
 edition = "2018"
 
 [dependencies]
@@ -9,3 +9,7 @@ num-complex = "0.3.0"
 rand = "0.7.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+#[lib]
+#name = "moara"
+#crate-type = ["dylib"]

@@ -1,7 +1,0 @@
-qiskit
-
-#examples
-jupyter
-
-#development
-pylint

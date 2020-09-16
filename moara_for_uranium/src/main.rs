@@ -1,5 +1,7 @@
 use std::env;
 use std::process;
+use std::fs;
+use std::error::Error;
 
 use moara;
 
@@ -13,7 +15,12 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let config = parse_arguments(args);
 
-    let results = moara::simulate_with_uranium(config.circuit_filename, config.shots, config.qubit_count);
+    let serialized_circuit = read_file(config.circuit_filename).unwrap_or_else(|err| {
+        println!("{}", err);
+        process::exit(1);
+    });
+
+    let results = moara::simulate_with_uranium(serialized_circuit, config.shots, config.qubit_count);
     print!("{:?}", results);
 }
 
@@ -45,6 +52,13 @@ fn parse_arguments(input:Vec<String>) -> Config
     };
 
     Config{circuit_filename:circuit_filename, shots:shots, qubit_count:qubit_count}
+}
+
+fn read_file(circuit_filename:String) -> Result<String, Box<dyn Error>>
+{
+    let contents = fs::read_to_string(circuit_filename)?;
+    
+    Ok(contents)
 }
 
 struct Config {
