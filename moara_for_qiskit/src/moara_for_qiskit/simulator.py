@@ -1,6 +1,7 @@
 from qiskit.providers.models import QasmBackendConfiguration
 from qiskit.providers import BaseBackend
 import moara
+import json
 
 class MoaraSimulator(BaseBackend):
     
@@ -20,7 +21,7 @@ class MoaraSimulator(BaseBackend):
         'max_shots': MAX_SHOTS,
         'description': 'A simulator',
         'coupling_map': None,
-        'basis_gates': ['u3', 'cx','id', 'x', 'y', 'z', 'h','swap'],
+        'basis_gates': ['cx','id', 'x', 'y', 'z', 'h','swap'],
         'gates': []
 }
 
@@ -28,5 +29,43 @@ class MoaraSimulator(BaseBackend):
        super().__init__(QasmBackendConfiguration.from_dict(self.CONFIGURATION), None)
 
     def run(self, qobj, backend_options=None, noise_model=None, validate=False):
-        return moara.simulate_qiskit('', 1024, 2)
-        #return qobj #{'01':534, '10':456}
+        if not qobj or not qobj.experiments:
+            return {}
+        experiment = qobj.experiments[0]
+
+        circuit = { "steps":[] }
+        index = 0
+        for instruction in experiment.instructions:
+            if not instruction or len(instruction.qubits) == 0:
+                continue
+
+            gate = None
+            if instruction.name == 'id':
+                gate = { 'name': 'identity', 'target':instruction.qubits[0] }
+            elif instruction.name == 'x':
+                gate = { 'name': 'pauli-x', 'target':instruction.qubits[0] }
+            elif instruction.name == 'y':
+                gate = { 'name': 'pauli-y', 'target':instruction.qubits[0] }
+            elif instruction.name == 'z':
+                gate = { 'name': 'pauli-z', 'target':instruction.qubits[0] }
+            elif instruction.name == 'h':
+                gate = { 'name': 'hadamard', 'target':instruction.qubits[0] }
+            elif instruction.name == 'u3':
+                gate = { 'name': 'u3', 'target':instruction.qubits[0] }
+            elif instruction.name == 'cx':
+                if len(instruction.qubits) != 2:
+                    continue
+                gate = { 'name': 'ctrl-pauli-x', 'control':instruction.qubits[0], 'target':instruction.qubits[1] }
+            elif instruction.name == 'swap':
+                if len(instruction.qubits) != 2:
+                    continue
+                gate = { 'name': 'swap', 'target':instruction.qubits[0], 'target2':instruction.qubits[1] }
+
+            if gate:
+                step = { 'index':index, 'gates':[gate] }
+                circuit['steps'].append(step)
+                index += 1
+
+        serializedCircuit = json.dumps(circuit)
+
+        return moara.simulate_qiskit(serializedCircuit, qobj.config.shots, experiment.config.n_qubits)

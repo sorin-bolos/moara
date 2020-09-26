@@ -21,11 +21,14 @@ pub fn simulate_with_uranium(serialized_circuit:String, shots:u32, qubit_count:O
 #[text_signature = "(serialized_circuit, shots, qubit_count)"]
 pub fn simulate_qiskit(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) -> PyResult<HashMap<String, u32>>
 {
+    let result_vector = uranium::simulator::simulate(serialized_circuit, shots, qubit_count);
+
     let mut results = HashMap::new();
-    results.insert("00".to_string(), 1);
-    results.insert("01".to_string(), 2);
-    results.insert("10".to_string(), 3);
-    results.insert("11".to_string(), shots-6);
+    for (i, count) in result_vector.iter().enumerate() {
+        if *count > 0u32 {
+            results.insert(format!("{:b}", i), *count);
+        }
+    }
 
     Ok(results)
 }
