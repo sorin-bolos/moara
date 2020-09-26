@@ -1,5 +1,6 @@
 from qiskit.providers.models import QasmBackendConfiguration
 from qiskit.providers import BaseBackend
+import moara
 
 class MoaraSimulator(BaseBackend):
     
@@ -27,4 +28,5 @@ class MoaraSimulator(BaseBackend):
        super().__init__(QasmBackendConfiguration.from_dict(self.CONFIGURATION), None)
 
     def run(self, qobj, backend_options=None, noise_model=None, validate=False):
-        return qobj #{'01':534, '10':456}
+        return moara.simulate_qiskit('', 1024, 2)
+        #return qobj #{'01':534, '10':456}
