@@ -11,15 +11,19 @@ pub struct Statevector
 impl Statevector
 {
     pub fn new(data:Vec<Complex32>) -> Self {
+        Self {
+            data:data
+        }
+    }
 
+    pub fn create_safe(data:Vec<Complex32>) -> Self {
+        
         if !is_unitary_vector(&data)
         {
             panic!("Vector is not unitary")
         }
 
-        Self {
-            data:data
-        }
+        Self::new(data)
     }
 
     pub fn data(&self) -> &Vec<Complex32>

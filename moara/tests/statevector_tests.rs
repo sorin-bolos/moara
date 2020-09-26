@@ -14,7 +14,7 @@ fn create_with_unitary_vector_works() {
 #[test]
 #[should_panic(expected = "Vector is not unitary")]
 fn create_with_non_unitary_vector_panics() {
-    Statevector::new(
+    Statevector::create_safe(
         vec![Complex32::new(1.0,0.0),Complex32::new(0.0,1.0/2.0)]);
 }
 

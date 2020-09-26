@@ -13,14 +13,19 @@ impl Operator
 {
     pub fn new(data:Vec<Vec<Complex32>>) -> Self {
 
+        Self {
+            data:data
+        }
+    }
+
+    pub fn create_safe(data:Vec<Vec<Complex32>>) -> Self {
+        
         if !is_unitary_operator(&data)
         {
             panic!("Operator is not unitary")
         }
 
-        Self {
-            data:data
-        }
+        Self::new(data)
     }
 
     pub fn data(&self) -> &Vec<Vec<Complex32>>

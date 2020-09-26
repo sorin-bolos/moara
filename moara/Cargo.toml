@@ -9,7 +9,8 @@ num-complex = "0.3.0"
 rand = "0.7.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+pyo3 = { version = "0.12.1" }
 
-#[lib]
-#name = "moara"
-#crate-type = ["dylib"]
+[lib]
+name = "moara"
+crate-type = ["cdylib", "rlib"]

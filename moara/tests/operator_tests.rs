@@ -18,7 +18,7 @@ fn create_with_unitary_matrix_works() {
 #[test]
 #[should_panic(expected = "Operator is not unitary")]
 fn create_with_non_unitary_matrix_panics() {
-    Operator::new(vec![
+    Operator::create_safe(vec![
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)],
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)]
     ]);
@@ -27,7 +27,7 @@ fn create_with_non_unitary_matrix_panics() {
 #[test]
 #[should_panic(expected = "Matrix is not square")]
 fn create_with_portrait_matrix_panics() {
-    Operator::new(vec![
+    Operator::create_safe(vec![
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)],
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)],
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)]
@@ -37,7 +37,7 @@ fn create_with_portrait_matrix_panics() {
 #[test]
 #[should_panic(expected = "Matrix is not square")]
 fn create_with_landscape_matrix_panics() {
-    Operator::new(vec![
+    Operator::create_safe(vec![
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)],
         vec![Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)]
     ]);
