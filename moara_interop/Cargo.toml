@@ -1,0 +1,13 @@
+[package]
+name = "moara_interop"
+version = "0.1.0"
+authors = ["Sorin Bolos <sorin.bolos@uipath.com>"]
+edition = "2018"
+
+[dependencies]
+moara = { path = "../moara" }
+pyo3 = { version = "0.12.1", features = ["extension-module"] }
+
+[lib]
+name = "moara_interop"
+crate-type = ["cdylib"]

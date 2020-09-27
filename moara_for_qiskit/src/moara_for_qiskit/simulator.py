@@ -1,6 +1,6 @@
 from qiskit.providers.models import QasmBackendConfiguration
 from qiskit.providers import BaseBackend
-import moara
+import moara_interop as moara
 import json
 
 class MoaraSimulator(BaseBackend):
@@ -68,4 +68,4 @@ class MoaraSimulator(BaseBackend):
 
         serializedCircuit = json.dumps(circuit)
 
-        return moara.simulate_qiskit(serializedCircuit, qobj.config.shots, experiment.config.n_qubits)
+        return moara.simulate(serializedCircuit, qobj.config.shots, experiment.config.n_qubits)

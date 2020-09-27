@@ -2,7 +2,7 @@
 extern crate moara;
 extern crate serde_json;
 
-use moara::uranium::simulator;
+use moara::simulator;
 
 #[test]
 fn simple_circuit_works() {

@@ -2,7 +2,7 @@
 extern crate moara;
 extern crate serde_json;
 
-use moara::uranium::circuit::Circuit;
+use moara::circuit::Circuit;
 
 #[test]
 fn deserialize_circuit_works() {
