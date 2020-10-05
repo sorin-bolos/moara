@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": "C:\\Users\\Sorin\\anaconda3\\envs\\moara\\python.exe",
+    "python.pythonPath": "C:\\Users\\tomut\\Anaconda3\\envs\\venvQ\\python.exe",
     "terminal.integrated.shellArgs.windows": ["/K", "C:\\Users\\Sorin\\anaconda3\\Scripts\\activate.bat C:\\Users\\Sorin\\anaconda3 & conda activate moara"]
 }
