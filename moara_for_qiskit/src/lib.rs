@@ -16,7 +16,7 @@ pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) ->
 }
 
 #[pymodule]
-fn moara_interop(_py: Python, m: &PyModule) -> PyResult<()> {
+fn moara_for_qiskit(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(simulate, m)?)?;
 
     Ok(())

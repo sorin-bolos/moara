@@ -1,5 +1,5 @@
 [package]
-name = "moara_interop"
+name = "moara_for_qiskit"
 version = "0.1.0"
 authors = ["Sorin Bolos <sorin.bolos@uipath.com>"]
 edition = "2018"
@@ -9,5 +9,5 @@ moara = { path = "../moara" }
 pyo3 = { version = "0.12.1", features = ["extension-module"] }
 
 [lib]
-name = "moara_interop"
+name = "moara_for_qiskit"
 crate-type = ["cdylib"]
