@@ -128,6 +128,65 @@ fn get_operator(gate:&Gate) -> Operator
         "pauli-y" => gates::pauli_y(),
         "pauli-z" => gates::pauli_z(),
         "hadamard" => gates::hadamard(),
+        "t" => gates::t(),
+        "t-dagger" => gates::t_dagger(),
+        "s" => gates::s(),
+        "s-dagger" => gates::s_dagger(),
+        "sqrt-not" => gates::sqrt_not(),
+        "u" => {
+            let phi = match gate.phi{
+                Some(phi_value) => phi_value,
+                None => panic!("u for qubit {} has no value for phi", gate.target)
+            };
+            let theta = match gate.theta{
+                Some(theta_value) => theta_value,
+                None => panic!("u for qubit {} has no value for theta", gate.target)
+            };
+            let lambda = match gate.lambda{
+                Some(lambda_value) => lambda_value,
+                None => panic!("u for qubit {} has no value for lambda", gate.target)
+            };
+            gates::u3_gate(theta, phi, lambda)
+        },
+        "u-phi-theta" => {
+            let phi = match gate.phi{
+                Some(phi_value) => phi_value,
+                None => panic!("u-phi-theta for qubit {} has no value for phi", gate.target)
+            };
+            let theta = match gate.theta{
+                Some(theta_value) => theta_value,
+                None => panic!("u-phi-theta for qubit {} has no value for theta", gate.target)
+            };
+            gates::u_phi_theta(phi, theta)
+        },
+        "r-phi" => {
+            let phi = match gate.phi{
+                Some(phi_value) => phi_value,
+                None => panic!("r-phi for qubit {} has no value for phi", gate.target)
+            };
+            gates::r_phi(phi)
+        },
+        "rx-phi" => {
+            let phi = match gate.phi{
+                Some(phi_value) => phi_value,
+                None => panic!("rx-phi for qubit {} has no value for phi", gate.target)
+            };
+            gates::rx_phi(phi)
+        },
+        "ry-phi" => {
+            let phi = match gate.phi{
+                Some(phi_value) => phi_value,
+                None => panic!("ry-phi for qubit {} has no value for phi", gate.target)
+            };
+            gates::ry_phi(phi)
+        },
+        "rz-phi" => {
+            let phi = match gate.phi{
+                Some(phi_value) => phi_value,
+                None => panic!("rz-phi for qubit {} has no value for phi", gate.target)
+            };
+            gates::rz_phi(phi)
+        },
         "ctrl-pauli-x" => {
             let control = match gate.control{
                 Some(control_value) => control_value,

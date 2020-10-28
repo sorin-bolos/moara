@@ -21,7 +21,7 @@ class MoaraSimulator(BaseBackend):
         'max_shots': MAX_SHOTS,
         'description': 'A simulator',
         'coupling_map': None,
-        'basis_gates': ['cx','id', 'x', 'y', 'z', 'h','swap'],
+        'basis_gates': ['cx','id', 'x', 'y', 'z', 'h', 's', 'sdg', 't', 'tdg', 'u3', 'u2', 'u', 'sx', 'rx', 'ry', 'rz', 'swap'],
         'gates': []
 }
 
@@ -48,17 +48,35 @@ class MoaraSimulator(BaseBackend):
                 gate = { 'name': 'pauli-y', 'target':instruction.qubits[0] }
             elif instruction.name == 'z':
                 gate = { 'name': 'pauli-z', 'target':instruction.qubits[0] }
-            elif instruction.name == 'h':
+            elif instruction.name == 'h':   
                 gate = { 'name': 'hadamard', 'target':instruction.qubits[0] }
+            elif instruction.name == 'sx':   
+                gate = { 'name': 'sqrt_not', 'target':instruction.qubits[0] }
+            elif instruction.name == 't':   
+                gate = { 'name': 't', 'target':instruction.qubits[0] }
+            elif instruction.name == 'tdg':   
+                gate = { 'name': 't_dagger', 'target':instruction.qubits[0] }
+            elif instruction.name == 's':   
+                gate = { 'name': 's', 'target':instruction.qubits[0] }
+            elif instruction.name == 'sdg':   
+                gate = { 'name': 's_dagger', 'target':instruction.qubits[0] }
+
             elif instruction.name == 'u3':
-                gate = { 'name': 'u3', 'target':instruction.qubits[0] }
+                gate = { 'name': 'u', 'target':instruction.qubits[0],'theta': instruction.params[0], 'phi': instruction.params[1], 'lambda': instruction.params[2] }
+            elif instruction.name == 'u2':
+                gate = { 'name': 'u-phi-theta', 'target':instruction.qubits[0], 'phi': instruction.params[0], 'theta': instruction.params[1] }
+            elif instruction.name == 'u1':
+                gate = { 'name': 'r-phi', 'target':instruction.qubits[0], 'phi': instruction.params[2] }
+            elif instruction.name == 'rx':
+                gate = { 'name': 'rx-phi', 'target':instruction.qubits[0], 'phi': instruction.params[0] }
+            elif instruction.name == 'ry':
+                gate = { 'name': 'ry-phi', 'target':instruction.qubits[0], 'phi': instruction.params[0] }
+            elif instruction.name == 'rz':
+                gate = { 'name': 'rz-phi', 'target':instruction.qubits[0], 'phi': instruction.params[0] }
+
             elif instruction.name == 'cx':
-                if len(instruction.qubits) != 2:
-                    continue
                 gate = { 'name': 'ctrl-pauli-x', 'control':instruction.qubits[0], 'target':instruction.qubits[1] }
             elif instruction.name == 'swap':
-                if len(instruction.qubits) != 2:
-                    continue
                 gate = { 'name': 'swap', 'target':instruction.qubits[0], 'target2':instruction.qubits[1] }
 
             if gate:
