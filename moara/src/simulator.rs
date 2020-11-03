@@ -1,7 +1,10 @@
+use std::collections::HashSet;
+use num_complex::Complex32;
 use super::circuit::Circuit;
-use super::circuit::Step;
 use super::circuit::Gate;
 use crate::operator::Operator;
+use crate::operator::IdentityTensorOperator;
+use crate::operator::TensorIdentityOperator;
 use crate::measurement::measure;
 use crate::statevector::Statevector;
 use crate::vectors;
@@ -47,15 +50,60 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<b
 
     let mut statevector:Option<Statevector> = None;
 
-    for step in ordered_steps
-    {
-        match get_step_operator(qubit_count, &mut measurements, step)
-        {
-            Some(operator) => statevector = match statevector {
-                                                None => Some(Statevector::new(operator.data()[..][0].to_vec())),
-                                                Some(previous_statevector) => Some(operator.apply(previous_statevector))
-                                            },
-            None => {}
+    for step in ordered_steps {
+        
+        let mut afected_qubits = HashSet::new();
+        
+        for gate in step.gates {
+        
+            if afected_qubits.contains(&gate.target) {
+                panic!("The qubit {} is mentioned twice in step {}", gate.target, step.index);
+            }
+            afected_qubits.insert(gate.target);
+            match gate.target2 {
+                Some(qubit_target2) => {
+                    if afected_qubits.contains(&qubit_target2) {
+                        panic!("The qubit {} is mentioned twice in step {}", qubit_target2, step.index);
+                    }
+                    afected_qubits.insert(qubit_target2);
+                },
+                None => {}
+            }
+            match gate.control {
+                Some(qubit_control) => {
+                    if afected_qubits.contains(&qubit_control) {
+                        panic!("The qubit {} is mentioned twice in step {}", qubit_control, step.index);
+                    }
+                    afected_qubits.insert(qubit_control);
+                },
+                None => {}
+            }
+            
+            if gate.name == MEASUREMENT
+            {
+                measurements[gate.target as usize] = true;
+                continue;
+            }
+
+            let operator = get_operator(&gate);
+            if gate.get_min_qubit_index() > 0 {
+                let identity_tensor_operator = IdentityTensorOperator::new(1 << (gate.get_max_qubit_index()+1), operator);
+                if gate.get_max_qubit_index() < qubit_count-1 {
+                    let identity_tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, identity_tensor_operator);
+                    statevector = apply(identity_tensor_identity_operator, statevector);
+                    continue;
+                }
+                statevector = apply(identity_tensor_operator, statevector);
+                continue;
+            }
+
+            if gate.get_max_qubit_index() < qubit_count-1 {
+                let tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, operator);
+                statevector = apply(tensor_identity_operator, statevector);
+                continue;
+            }
+
+            statevector = apply(operator, statevector);
         }
     }
 
@@ -65,62 +113,18 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<b
     }
 }
 
-fn get_step_operator(qubit_count:u8, measurements:&mut Vec<bool>, step:Step) -> Option<Operator>
-{
-    let mut ordered_gates = step.gates;
-    ordered_gates.sort_by(|a, b| a.target.cmp(&b.target));
-
-    let mut qubit_index = 0;
-    let mut step_operator:Option<Operator> = None;
-    
-    for gate in ordered_gates
-    {
-        match get_intermediate_step_operator(measurements, gate, &mut qubit_index)
-        {
-            Some(next_operator) => step_operator = match step_operator {
-                None => Some(next_operator),
-                Some(previous_operator) => Some(previous_operator.tensor(&next_operator))
-            },
-            None => {}
-        }
+fn apply(operator: impl Operator, statevector: Option<Statevector>) -> Option<Statevector> {
+    match statevector {
+        None => Some(Statevector::new(get_operator_first_column(operator))),
+        Some(previous_statevector) => Some(operator.apply(previous_statevector))
     }
-
-    if qubit_count > qubit_index
-    {
-        step_operator = match step_operator {
-            None => None,
-            Some(previous_operator) => Some(previous_operator.tensor(&gates::identity(&qubit_count-qubit_index)))
-        }
-    }
-
-    step_operator
 }
 
-fn get_intermediate_step_operator(measurements:&mut Vec<bool>, gate:Gate, qubit_index:&mut u8) -> Option<Operator>
-{
-    if measurements[gate.target as usize] 
-    {
-        panic!("Cannot add operator after measurement")
-    }
-
-    if gate.name == MEASUREMENT
-    {
-        measurements[gate.target as usize] = true;
-        return None;
-    }
-
-    let mut next_operator = get_operator(&gate);
-    let gate_min_index = gate.get_min_qubit_index();
-    if gate_min_index > *qubit_index
-    {
-        next_operator = gates::identity(gate_min_index-*qubit_index).tensor(&next_operator);
-    }
-    *qubit_index = gate.get_max_qubit_index()+1;
-    
-    Some(next_operator)
+fn get_operator_first_column(operator: impl Operator) -> Vec<Complex32> {
+    (0..operator.size()).map(|i| operator.get(i,0)).collect()
 }
 
-fn get_operator(gate:&Gate) -> Operator
+fn get_operator(gate:&Gate) -> impl Operator
 {
     match gate.name.as_ref() {
         "measure-z" => gates::identity(1),

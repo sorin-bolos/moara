@@ -6,11 +6,10 @@ extern crate num_complex;
 use core::f32::consts::PI;
 use num_complex::Complex32;
 use moara::operator::Operator;
+use moara::operator::MatrixOperator;
 use moara::gates;
 use moara::C;
 use moara::tools;
-
-
 
 #[test]
 fn swap_gives_correct_opertator() {
@@ -32,7 +31,7 @@ fn swap_gives_correct_opertator() {
     vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(1), C!(0), C!(0)],
     vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(1), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0)],
     vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(1)]];
-    assert_eq!(&expected_data, swap_4.data());
+    assert_eq!(expected_data, get_data(swap_4));
 
   let swap_2 = gates::swap(2);
   let expected_data_2 = vec![
@@ -40,7 +39,7 @@ fn swap_gives_correct_opertator() {
     vec![ C!(0), C!(0), C!(1), C!(0)],
     vec![ C!(0), C!(1), C!(0), C!(0)],
     vec![ C!(0), C!(0), C!(0), C!(1)]];
-    assert_eq!(&expected_data_2, swap_2.data());
+    assert_eq!(expected_data_2, get_data(swap_2));
   
 }
 
@@ -58,7 +57,7 @@ fn cx_gives_correct_opertator() {
     vec![ C!(0), C!(1), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0)],
     vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(1), C!(0)],
     vec![ C!(0), C!(0), C!(0), C!(1), C!(0), C!(0), C!(0), C!(0)]];
-  assert_eq!(&expected_data_3, cx_3.data());
+  assert_eq!(expected_data_3, get_data(cx_3));
 
   let cx_2 = gates::cx(2,true);
   let expected_data_2 = vec![
@@ -66,7 +65,7 @@ fn cx_gives_correct_opertator() {
     vec![ C!(0), C!(0), C!(0), C!(1)],
     vec![ C!(0), C!(0), C!(1), C!(0)],
     vec![ C!(0), C!(1), C!(0), C!(0)]];
-    assert_eq!(&expected_data_2, cx_2.data());
+    assert_eq!(expected_data_2, get_data(cx_2));
 }
 
 #[test]
@@ -75,44 +74,28 @@ fn u3_gives_correct_opertator() {
     let expected_data_1= vec![
       vec![ C!(1), C!(0)],
       vec![ C!(0), C!(1)]];
-    assert_eq!(&expected_data_1, u3_1.data());
+    assert_eq!(expected_data_1, get_data(u3_1));
 
     let u3_2= gates::u3_gate(PI/2.0,-PI/2.0,PI/2.0);
-    let expected = Operator::new(vec![
+    let expected = MatrixOperator::new(vec![
       vec![ C!((1.0/2_f32.sqrt())), C!((-1.0/2_f32.sqrt())*i)],
       vec![ C!((-1.0/2_f32.sqrt())*i), C!((1.0/2_f32.sqrt()))]]);
 
     assert!(operators_are_equal(expected, u3_2));
 }
 
-
-// #[test]
-// fn cu3_gives_correct_opertator() {
-// let cu3_i = gates::cu3_gate(0,2,0.0,0.0,0.0);
-// let expected_data_i = vec![
-//   vec![ C!(1), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0)],
-//    vec![ C!(0), C!(1), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0)],
-//    vec![ C!(0), C!(0), C!(1), C!(0), C!(0), C!(0), C!(0), C!(0)],
-//    vec![ C!(0), C!(0), C!(0), C!(1), C!(0), C!(0), C!(0), C!(0)],
-//   vec![ C!(0), C!(0), C!(0), C!(0), C!(1), C!(0), C!(0), C!(0)],
-//   vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(1), C!(0), C!(0)],
-//   vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(1), C!(0)],
-//   vec![ C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(0), C!(1)]];
-//   assert_eq!(&expected_data_i, cu3_i.data());
-// }
-
-fn operators_are_equal(a:Operator, b:Operator) -> bool
+fn operators_are_equal(a:impl Operator, b:impl Operator) -> bool
 {
-    if a.data().len() != b.data().len()
+    if a.size() != b.size()
     {
         return false;
     }
 
-    for i in 0..a.data().len()
+    for i in 0..a.size()
     {
-        for j in 0..a.data().len() 
+        for j in 0..a.size() 
         {
-            if !(tools::equals(a.data()[i][j].re, b.data()[i][j].re) && tools::equals(a.data()[i][j].im, b.data()[i][j].im))
+            if !(tools::equals(a.get(i,j).re, b.get(i,j).re) && tools::equals(a.get(i,j).im, b.get(i,j).im))
             {
                 return false;
             }
@@ -120,4 +103,8 @@ fn operators_are_equal(a:Operator, b:Operator) -> bool
     }
 
     return true;
+}
+
+fn get_data(operator:impl Operator) -> Vec<Vec<Complex32>> {
+    (0..operator.size()).map(|i| (0..operator.size()).map(|j| operator.get(i,j)).collect()).collect()
 }
