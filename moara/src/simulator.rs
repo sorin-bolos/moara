@@ -89,17 +89,17 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<b
             if gate.get_min_qubit_index() > 0 {
                 let identity_tensor_operator = IdentityTensorOperator::new(1 << (gate.get_max_qubit_index()+1), operator);
                 if gate.get_max_qubit_index() < qubit_count-1 {
-                    let identity_tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, identity_tensor_operator);
-                    statevector = apply(identity_tensor_identity_operator, statevector);
+                    let identity_tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, Box::new(identity_tensor_operator));
+                    statevector = apply(Box::new(identity_tensor_identity_operator), statevector);
                     continue;
                 }
-                statevector = apply(identity_tensor_operator, statevector);
+                statevector = apply(Box::new(identity_tensor_operator), statevector);
                 continue;
             }
 
             if gate.get_max_qubit_index() < qubit_count-1 {
                 let tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, operator);
-                statevector = apply(tensor_identity_operator, statevector);
+                statevector = apply(Box::new(tensor_identity_operator), statevector);
                 continue;
             }
 
@@ -113,20 +113,30 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<b
     }
 }
 
-fn apply(operator: impl Operator, statevector: Option<Statevector>) -> Option<Statevector> {
+fn apply(operator: Box<dyn Operator>, statevector: Option<Statevector>) -> Option<Statevector> {
     match statevector {
         None => Some(Statevector::new(get_operator_first_column(operator))),
         Some(previous_statevector) => Some(operator.apply(previous_statevector))
     }
 }
 
-fn get_operator_first_column(operator: impl Operator) -> Vec<Complex32> {
+fn get_operator_first_column(operator: Box<dyn Operator>) -> Vec<Complex32> {
     (0..operator.size()).map(|i| operator.get(i,0)).collect()
 }
 
-fn get_operator(gate:&Gate) -> impl Operator
+fn get_operator(gate:&Gate) ->  Box<dyn Operator>
 {
-    match gate.name.as_ref() {
+    let gate_name = gate.name.as_ref();
+    if gate_name == "ctrl-pauli-x" {
+        let control = match gate.control{
+            Some(control_value) => control_value,
+            None => panic!("ctrl-pauli-x for qubit {} has no value for control", gate.target)
+        };
+        let gate = gates::cx(((gate.target as i8-control as i8).abs()+1) as u8, control>gate.target);
+        return Box::new(gate);
+    }
+
+    let gate = match gate_name {
         "measure-z" => gates::identity(1),
         "pauli-x" => gates::pauli_x(),
         "pauli-y" => gates::pauli_y(),
@@ -191,13 +201,6 @@ fn get_operator(gate:&Gate) -> impl Operator
             };
             gates::rz_phi(phi)
         },
-        "ctrl-pauli-x" => {
-            let control = match gate.control{
-                Some(control_value) => control_value,
-                None => panic!("ctrl-pauli-x for qubit {} has no value for control", gate.target)
-            };
-            gates::cx(((gate.target as i8-control as i8).abs()+1) as u8, control>gate.target)
-        },
         "swap" => {
             let target2 = match gate.target2{
                 Some(target2_value) => target2_value,
@@ -206,7 +209,8 @@ fn get_operator(gate:&Gate) -> impl Operator
             gates::swap(((gate.target as i8-target2 as i8).abs()+1) as u8)
         },
         nunknown_gate => panic!("Unknown operator {}", nunknown_gate)
-    }
+    };
+    Box::new(gate)
 }
 
 fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {

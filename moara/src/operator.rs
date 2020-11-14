@@ -28,10 +28,11 @@ pub trait Operator {
     
         for i in 0..len
         {
-            result[i] = self.non_zero_elements_for_row(i)
-                            .iter()
-                            .fold(C!(0), |acc, element_at_position| acc + statevector.data()[element_at_position.position]*element_at_position.element);
-            
+            let mut elem = C!(0);
+            for eap in self.non_zero_elements_for_row(i) {
+                elem += eap.element*statevector.data()[eap.position];
+            }
+            result[i] = elem;            
         }
     
         Statevector::new(result)
@@ -68,14 +69,14 @@ impl Operator for MatrixOperator {
     }
 }
 
-pub struct IdentityTensorOperator<T> where T : Operator
+pub struct IdentityTensorOperator
 {
     size:usize,
-    inner_operator:T
+    inner_operator:Box<dyn Operator>
 }
 
-impl<T> IdentityTensorOperator<T> where T: Operator {
-    pub fn new(size: usize, inner_operator: T) -> Self {
+impl IdentityTensorOperator {
+    pub fn new(size: usize, inner_operator: Box<dyn Operator>) -> Self {
         Self {
             size: size,
             inner_operator: inner_operator
@@ -83,7 +84,7 @@ impl<T> IdentityTensorOperator<T> where T: Operator {
     }
 }
 
-impl<T> Operator for IdentityTensorOperator<T> where T : Operator {
+impl Operator for IdentityTensorOperator {
     
     fn size(&self) -> usize {
         self.size
@@ -107,14 +108,14 @@ impl<T> Operator for IdentityTensorOperator<T> where T : Operator {
     }
 }
 
-pub struct TensorIdentityOperator<T> where T : Operator
+pub struct TensorIdentityOperator
 {
     size:usize,
-    inner_operator:T
+    inner_operator:Box<dyn Operator>
 }
 
-impl<T> TensorIdentityOperator<T> where T: Operator {
-    pub fn new(size: usize, inner_operator: T) -> Self {
+impl TensorIdentityOperator {
+    pub fn new(size: usize, inner_operator: Box<dyn Operator>) -> Self {
         Self {
             size: size,
             inner_operator: inner_operator
@@ -122,7 +123,7 @@ impl<T> TensorIdentityOperator<T> where T: Operator {
     }
 }
 
-impl<T> Operator for TensorIdentityOperator<T> where T : Operator {
+impl Operator for TensorIdentityOperator {
     
     fn size(&self) -> usize {
         self.size
@@ -143,5 +144,53 @@ impl<T> Operator for TensorIdentityOperator<T> where T : Operator {
             .iter()
             .map(|eap| ElementAtPosition{position:eap.position*n + (row % n), element:eap.element})
             .collect()
+    }
+}
+
+pub struct CxOperator {
+    size:usize,
+    reversed:bool
+}
+
+impl CxOperator {
+    pub fn new(qubit_span: u8, reversed:bool) -> Self {
+        Self {
+            size: 1 << qubit_span,
+            reversed: reversed
+        }
+    }
+}
+
+impl Operator for CxOperator {
+    fn size(&self) -> usize {
+        self.size
+    }
+
+    fn get(&self, i:usize, j:usize) -> Complex32 {
+        if i == j {
+            return C!(1);
+        } else {
+            return C!(0)
+        }
+    }
+
+    fn non_zero_elements_for_row(&self, row:usize) -> Vec<ElementAtPosition> {
+        if self.reversed {
+            if row % 2 == 0 {
+                return vec![ElementAtPosition { position: row, element: C!(1) }]
+            } else {
+                return vec![ElementAtPosition { position: (self.size/2 + row)%self.size, element: C!(1) }]
+            }
+        } else {
+            if row < self.size/2 {
+                return vec![ElementAtPosition { position: row, element: C!(1) }]
+            } else {
+                if row % 2 == 0 {
+                    return vec![ElementAtPosition { position: row+1, element: C!(1) }]
+                } else {
+                    return vec![ElementAtPosition { position: row-1, element: C!(1) }]
+                }
+            }
+        }
     }
 }
