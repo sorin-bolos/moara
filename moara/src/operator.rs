@@ -167,11 +167,34 @@ impl Operator for CxOperator {
     }
 
     fn get(&self, i:usize, j:usize) -> Complex32 {
-        if i == j {
-            return C!(1);
+        if self.reversed {
+            if i % 2 == 0 {
+                if j == i {
+                    return C!(1);
+                }
+            } else {
+                if j == (self.size/2 + i)%self.size {
+                    return C!(1);
+                }
+            }
         } else {
-            return C!(0)
+            if i < self.size/2 {
+                if j == i {
+                    return C!(1);
+                }
+            } else {
+                if i % 2 == 0 {
+                    if j == i+1 {
+                        return C!(1);
+                    }
+                } else {
+                    if j == i-1 {
+                        return C!(1);
+                    }
+                }
+            }
         }
+        C!(0)
     }
 
     fn non_zero_elements_for_row(&self, row:usize) -> Vec<ElementAtPosition> {
