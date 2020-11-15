@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::collections::HashMap;
 use num_complex::Complex32;
 use super::circuit::Circuit;
 use super::circuit::Gate;
@@ -43,6 +44,9 @@ fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
 
 fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<bool>)
 {
+
+    let mut cache = HashMap::new();
+
     let mut measurements = vec![false; qubit_count as usize];
 
     let mut ordered_steps = circuit.steps;
@@ -85,11 +89,15 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<b
                 continue;
             }
 
-            let operator = get_operator(&gate);
+            if !cache.contains_key(&gate.name) {
+                cache.insert(gate.name.to_string(), get_operator(&gate));
+            }
+            let operator = cache.get(&gate.name).unwrap();
+
             if gate.get_min_qubit_index() > 0 {
                 let identity_tensor_operator = IdentityTensorOperator::new(1 << (gate.get_max_qubit_index()+1), operator);
                 if gate.get_max_qubit_index() < qubit_count-1 {
-                    let identity_tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, Box::new(identity_tensor_operator));
+                    let identity_tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, &Box::new(identity_tensor_operator));
                     statevector = apply(Box::new(identity_tensor_identity_operator), statevector);
                     continue;
                 }
@@ -103,7 +111,7 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Statevector, Vec<b
                 continue;
             }
 
-            statevector = apply(operator, statevector);
+            statevector = apply(*operator, statevector);
         }
     }
 
@@ -127,6 +135,7 @@ fn get_operator_first_column(operator: Box<dyn Operator>) -> Vec<Complex32> {
 fn get_operator(gate:&Gate) ->  Box<dyn Operator>
 {
     let gate_name = gate.name.as_ref();
+
     if gate_name == "ctrl-pauli-x" {
         let control = match gate.control{
             Some(control_value) => control_value,
@@ -210,7 +219,7 @@ fn get_operator(gate:&Gate) ->  Box<dyn Operator>
         },
         nunknown_gate => panic!("Unknown operator {}", nunknown_gate)
     };
-    Box::new(gate)
+    return Box::new(gate);
 }
 
 fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {

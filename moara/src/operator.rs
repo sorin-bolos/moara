@@ -69,14 +69,14 @@ impl Operator for MatrixOperator {
     }
 }
 
-pub struct IdentityTensorOperator
+pub struct IdentityTensorOperator<'a>
 {
     size:usize,
-    inner_operator:Box<dyn Operator>
+    inner_operator:&'a Box<dyn Operator>
 }
 
-impl IdentityTensorOperator {
-    pub fn new(size: usize, inner_operator: Box<dyn Operator>) -> Self {
+impl<'a> IdentityTensorOperator<'a> {
+    pub fn new(size: usize, inner_operator: &'a Box<dyn Operator>) -> Self {
         Self {
             size: size,
             inner_operator: inner_operator
@@ -84,7 +84,7 @@ impl IdentityTensorOperator {
     }
 }
 
-impl Operator for IdentityTensorOperator {
+impl Operator for IdentityTensorOperator<'_> {
     
     fn size(&self) -> usize {
         self.size
@@ -108,14 +108,14 @@ impl Operator for IdentityTensorOperator {
     }
 }
 
-pub struct TensorIdentityOperator
+pub struct TensorIdentityOperator<'a>
 {
     size:usize,
-    inner_operator:Box<dyn Operator>
+    inner_operator:&'a Box<dyn Operator>
 }
 
-impl TensorIdentityOperator {
-    pub fn new(size: usize, inner_operator: Box<dyn Operator>) -> Self {
+impl<'a> TensorIdentityOperator<'a> {
+    pub fn new(size: usize, inner_operator: &'a Box<dyn Operator>) -> Self {
         Self {
             size: size,
             inner_operator: inner_operator
@@ -123,7 +123,7 @@ impl TensorIdentityOperator {
     }
 }
 
-impl Operator for TensorIdentityOperator {
+impl Operator for TensorIdentityOperator<'_> {
     
     fn size(&self) -> usize {
         self.size
