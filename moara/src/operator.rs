@@ -28,11 +28,9 @@ pub trait Operator {
     
         for i in 0..len
         {
-            let mut elem = C!(0);
             for eap in self.non_zero_elements_for_row(i) {
-                elem += eap.element*statevector.data()[eap.position];
-            }
-            result[i] = elem;            
+                result[i] += eap.element*statevector.data()[eap.position];
+            }            
         }
     
         Statevector::new(result)
@@ -62,10 +60,12 @@ impl Operator for MatrixOperator {
     }
 
     fn non_zero_elements_for_row(&self, row:usize) -> Vec<ElementAtPosition> {
-        self.data[row].iter()
-                      .enumerate()
-                      .map(|enumeration| ElementAtPosition { position:enumeration.0, element:*enumeration.1 })
-                      .collect()
+        let len = self.data.len();
+        let mut res =  Vec::<ElementAtPosition>::with_capacity(len);
+        for i in 0..len{
+            res.push(ElementAtPosition { position:i, element:self.data[row][i] });
+        }
+        res
     }
 }
 
@@ -99,12 +99,12 @@ impl Operator for IdentityTensorOperator {
     }
 
     fn non_zero_elements_for_row(&self, row:usize) -> Vec<ElementAtPosition> {
-        let m = row % self.inner_operator.size();
-        self.inner_operator
-            .non_zero_elements_for_row(m)
-            .iter()
-            .map(|eap| ElementAtPosition{position:eap.position + row - m, element:eap.element})
-            .collect()
+        let m = row % self.inner_operator.size();        
+        let mut inner = self.inner_operator.non_zero_elements_for_row(m);
+        for i in 0..inner.len(){
+            inner[i].position = inner[i].position + row-m;
+        }
+        inner
     }
 }
 
@@ -139,11 +139,11 @@ impl Operator for TensorIdentityOperator {
 
     fn non_zero_elements_for_row(&self, row:usize) -> Vec<ElementAtPosition> {
         let n = self.size / self.inner_operator.size();
-        self.inner_operator
-            .non_zero_elements_for_row(row / n)
-            .iter()
-            .map(|eap| ElementAtPosition{position:eap.position*n + (row % n), element:eap.element})
-            .collect()
+        let mut inner = self.inner_operator.non_zero_elements_for_row(row / n);
+        for i in 0..inner.len(){
+            inner[i].position = inner[i].position*n + (row % n) 
+        }
+        inner
     }
 }
 
