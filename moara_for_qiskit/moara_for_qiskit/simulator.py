@@ -81,7 +81,7 @@ class MoaraSimulator(BaseBackend):
                 step = { 'index':index, 'gates':[gate] }
                 circuit['steps'].append(step)
                 index += 1
-
+                
         serializedCircuit = json.dumps(circuit)
         
         return simulate(serializedCircuit, qobj.config.shots, experiment.config.n_qubits)
