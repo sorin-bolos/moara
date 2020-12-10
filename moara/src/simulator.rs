@@ -4,6 +4,8 @@ use super::circuit::Circuit;
 use super::circuit::Gate;
 use crate::operator::Operator;
 use crate::operator::MatrixOperator;
+use crate::operator::IdentityTensorOperator;
+use crate::operator::TensorIdentityOperator;
 use crate::statevector::Statevector;
 use crate::measurement::measure;
 use crate::gates;
@@ -83,14 +85,30 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
                 None => {}
             }
             
-            if gate.name == MEASUREMENT
-            {
+            if gate.name == MEASUREMENT {
                 measurements[gate.target as usize] = true;
                 continue;
             }
 
             if is_controlled || is_multi_target {
-                
+                let operator = get_operator(&gate);
+                if gate.get_min_qubit_index() > 0 {
+                    let identity_tensor_operator = IdentityTensorOperator::new(1 << (gate.get_max_qubit_index()+1), operator);
+                    if gate.get_max_qubit_index() < qubit_count-1 {
+                        let identity_tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, Box::new(identity_tensor_operator));
+                        statevector = *identity_tensor_identity_operator.apply(Statevector::new(&statevector)).data();
+                        continue;
+                    }
+                    statevector = *identity_tensor_operator.apply(Statevector::new(&statevector)).data();
+                    continue;
+                }
+                if gate.get_max_qubit_index() < qubit_count-1 {
+                    let tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, operator);
+                    statevector = *tensor_identity_operator.apply(Statevector::new(&statevector)).data();
+                    continue;
+                }
+    
+                statevector = *operator.apply(Statevector::new(&statevector)).data();
             } else {
                 let singel_qubit_operator = get_singel_qubit_operator(&gate);
                 apply_singel_qubit_operator(singel_qubit_operator, &mut statevector, gate.target, qubit_count);
@@ -104,26 +122,29 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
 
 fn apply_singel_qubit_operator(operator:MatrixOperator, statevector: &mut Vec<Complex32>, gate_position: u8, qubit_count:u8) {
     let n = 1 << (qubit_count - 1);
-    let m00 = operator.get(0,0);
-    let m01 = operator.get(0,1);
-    let m10 = operator.get(1,0);
-    let m11 = operator.get(1,1);
     for i in 0..n {
         let (index0, index1) = get_indexes(i, gate_position, qubit_count);
         let sv0 = statevector[index0];
         let sv1 = statevector[index1];
 
-        statevector[index0] = m00*sv0 + m01*sv1;
-        statevector[index1] = m10*sv0 + m11*sv1;
+        
+        let m00 = operator.get(0,0);
+        let m01 = operator.get(0,1);
+        let m10 = operator.get(1,0);
+        let m11 = operator.get(1,1);
+
+        statevector[index0] = m00*sv0 + m10*sv1;
+        statevector[index1] = m01*sv0 + m11*sv1;
     }
 }
 
 fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     let reversed_gate_position = qubit_count - gate_position - 1;
-    let left_shift = gate_position+1;
-    let modulo = (i << left_shift) >> left_shift;
+    //let left_shift = 64-reversed_gate_position;
+    //let modulo = (i << left_shift) >> left_shift;
+    let lowbits = i & MASKS[usize::from(reversed_gate_position)];
     let remainder = (i >> reversed_gate_position) << (reversed_gate_position+1);
-    let index0 = remainder | modulo;
+    let index0 = remainder | lowbits; //modulo;
     let index1 = index0 | (1 << reversed_gate_position);
 
     (index0, index1)
@@ -302,3 +323,22 @@ fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
 
     qubit_count
 }
+
+const MASKS: [usize; 64] = [
+    0, 1, 3, 7,
+    15, 31, 63, 127,
+    255, 511, 1023, 2047,
+    4095, 8191, 16383, 32767,
+    65535, 131071, 262143, 524287,
+    1048575, 2097151, 4194303, 8388607,
+    16777215, 33554431, 67108863, 134217727,
+    268435455, 536870911, 1073741823, 2147483647,
+    4294967295, 8589934591, 17179869183, 34359738367,
+    68719476735, 137438953471, 274877906943, 549755813887,
+    1099511627775, 2199023255551, 4398046511103, 8796093022207,
+    17592186044415, 35184372088831, 70368744177663, 140737488355327,
+    281474976710655, 562949953421311, 1125899906842623, 2251799813685247,
+    4503599627370495, 9007199254740991, 18014398509481983, 36028797018963967,
+    72057594037927935, 144115188075855871, 288230376151711743, 576460752303423487,
+    1152921504606846975, 2305843009213693951, 4611686018427387903, 9223372036854775807
+];
