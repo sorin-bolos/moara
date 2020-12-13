@@ -1,11 +1,9 @@
 use std::collections::HashSet;
 use num_complex::Complex32;
+use rand::Rng;
+use rand::prelude::ThreadRng;
 use super::circuit::Circuit;
 use super::circuit::Gate;
-use crate::operator::Operator;
-use crate::operator::MatrixOperator;
-use crate::statevector::Statevector;
-use crate::measurement::measure;
 use crate::gates;
 
 const MEASUREMENT: &str = "measure-z";
@@ -34,10 +32,9 @@ fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
 
     let (final_statevector, _measurements) = get_final_statevector(qubit_count, circuit);
 
-    let s_final_statevector = Statevector::new(final_statevector);
-    (0..shots).map(|_| measure(&s_final_statevector))
-              .fold(vec![0u32;1<<qubit_count],
-                    |mut intermediate_results,measurement_result| {intermediate_results[measurement_result] += 1; intermediate_results})
+    let samples = measure(final_statevector, shots);
+
+    samples
 }
 
 fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Vec<bool>)
@@ -93,24 +90,24 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
     (statevector, measurements)
 }
 
-fn apply_singel_qubit_operator(operator:MatrixOperator, statevector: &mut Vec<Complex32>, gate_position: u8, qubit_count:u8) {
+fn apply_singel_qubit_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, gate_position: u8, qubit_count:u8) {
     let n = 1 << (qubit_count - 1);
     for i in 0..n {
         let (index0, index1) = get_indexes(i, gate_position, qubit_count);
         let sv0 = statevector[index0];
         let sv1 = statevector[index1];
         
-        let m00 = operator.get(0,0);
-        let m01 = operator.get(0,1);
-        let m10 = operator.get(1,0);
-        let m11 = operator.get(1,1);
+        let m00 = operator[0];
+        let m01 = operator[1];
+        let m10 = operator[2];
+        let m11 = operator[3];
 
         statevector[index0] = m00*sv0 + m10*sv1;
         statevector[index1] = m01*sv0 + m11*sv1;
     }
 }
 
-fn apply_controlled_operator(operator:MatrixOperator, statevector: &mut Vec<Complex32>, target: u8, qubit_count:u8, control:u8) {
+fn apply_controlled_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, target: u8, qubit_count:u8, control:u8) {
     let n = 1 << (qubit_count - 2);
 
     let control_positon = if control < target { control } else { control-1 };
@@ -122,10 +119,10 @@ fn apply_controlled_operator(operator:MatrixOperator, statevector: &mut Vec<Comp
         let sv0 = statevector[index0];
         let sv1 = statevector[index1];
         
-        let m00 = operator.get(0,0);
-        let m01 = operator.get(0,1);
-        let m10 = operator.get(1,0);
-        let m11 = operator.get(1,1);
+        let m00 = operator[0];
+        let m01 = operator[1];
+        let m10 = operator[2];
+        let m11 = operator[3];
 
         statevector[index0] = m00*sv0 + m10*sv1;
         statevector[index1] = m01*sv0 + m11*sv1;
@@ -142,7 +139,7 @@ fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     (index0, index1)
 }
 
-fn get_singel_qubit_operator(gate:&Gate) -> MatrixOperator
+fn get_singel_qubit_operator(gate:&Gate) -> [Complex32; 4]
 {
     let gate_name = gate.name.as_ref();
     match gate_name {
@@ -213,7 +210,7 @@ fn get_singel_qubit_operator(gate:&Gate) -> MatrixOperator
     }
 }
 
-fn get_operator_for_controlled(gate:&Gate) ->  MatrixOperator
+fn get_operator_for_controlled(gate:&Gate) ->  [Complex32; 4]
 {
     //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
     let single_qubit_gate_name = &gate.name[5..];
@@ -242,6 +239,39 @@ fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
     }
 
     qubit_count
+}
+
+fn measure(statevector:Vec<Complex32>, shots:u32) -> Vec<u32> {
+    let mut rng = rand::thread_rng();
+    let len = statevector.len();
+    let mut measurement_results = vec![0u32; len];
+    
+    let mut i = 0;
+    while i < shots {
+        let sample = sample(&statevector, &mut rng, len);
+        measurement_results[sample] += 1;
+        i += 1;
+    }
+
+    measurement_results
+}
+
+fn sample(statevector:&Vec<Complex32>, rng: &mut ThreadRng, len:usize) -> usize {
+    let sample:f32 = rng.gen();
+
+    let mut running_sum = 0.0;
+    let mut i = 0;
+    while i < len {
+        let probability = statevector[i].norm_sqr();
+        running_sum += probability;
+        if sample < running_sum
+        {
+            return i;
+        }
+        i += 1;
+    }
+
+    panic!("Sample was not in the expected interval");
 }
 
 const MASKS: [usize; 64] = [
