@@ -4,8 +4,6 @@ use super::circuit::Circuit;
 use super::circuit::Gate;
 use crate::operator::Operator;
 use crate::operator::MatrixOperator;
-use crate::operator::IdentityTensorOperator;
-use crate::operator::TensorIdentityOperator;
 use crate::statevector::Statevector;
 use crate::measurement::measure;
 use crate::gates;
@@ -57,63 +55,38 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
         let mut afected_qubits = HashSet::new();
         
         for gate in step.gates {
-            let mut is_controlled = false;
-            let mut is_multi_target = false;
 
             if afected_qubits.contains(&gate.target) {
                 panic!("The qubit {} is mentioned twice in step {}", gate.target, step.index);
             }
             afected_qubits.insert(gate.target);
+
             match gate.target2 {
-                Some(qubit_target2) => {
-                    if afected_qubits.contains(&qubit_target2) {
-                        panic!("The qubit {} is mentioned twice in step {}", qubit_target2, step.index);
-                    }
-                    afected_qubits.insert(qubit_target2);
-                    is_multi_target = true;
+                Some(_) => {
+                    panic!("Multi target gates are not supported yet.");
                 },
                 None => {}
             }
+
             match gate.control {
                 Some(qubit_control) => {
                     if afected_qubits.contains(&qubit_control) {
                         panic!("The qubit {} is mentioned twice in step {}", qubit_control, step.index);
                     }
                     afected_qubits.insert(qubit_control);
-                    is_controlled = true;
+                    
+                    let singel_qubit_operator = get_operator_for_controlled(&gate);
+                    apply_controlled_operator(singel_qubit_operator, &mut statevector, gate.target, qubit_count, qubit_control);
                 },
-                None => {}
-            }
-            
-            if gate.name == MEASUREMENT {
-                measurements[gate.target as usize] = true;
-                continue;
-            }
-
-            if is_controlled || is_multi_target {
-                let operator = get_operator(&gate);
-                if gate.get_min_qubit_index() > 0 {
-                    let identity_tensor_operator = IdentityTensorOperator::new(1 << (gate.get_max_qubit_index()+1), operator);
-                    if gate.get_max_qubit_index() < qubit_count-1 {
-                        let identity_tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, Box::new(identity_tensor_operator));
-                        statevector = *identity_tensor_identity_operator.apply(Statevector::new(&statevector)).data();
+                None => {
+                    if gate.name == MEASUREMENT {
+                        measurements[gate.target as usize] = true;
                         continue;
                     }
-                    statevector = *identity_tensor_operator.apply(Statevector::new(&statevector)).data();
-                    continue;
+                    let singel_qubit_operator = get_singel_qubit_operator(&gate);
+                    apply_singel_qubit_operator(singel_qubit_operator, &mut statevector, gate.target, qubit_count);
                 }
-                if gate.get_max_qubit_index() < qubit_count-1 {
-                    let tensor_identity_operator = TensorIdentityOperator::new(1 << qubit_count, operator);
-                    statevector = *tensor_identity_operator.apply(Statevector::new(&statevector)).data();
-                    continue;
-                }
-    
-                statevector = *operator.apply(Statevector::new(&statevector)).data();
-            } else {
-                let singel_qubit_operator = get_singel_qubit_operator(&gate);
-                apply_singel_qubit_operator(singel_qubit_operator, &mut statevector, gate.target, qubit_count);
             }
-            
         }
     }
 
@@ -126,7 +99,28 @@ fn apply_singel_qubit_operator(operator:MatrixOperator, statevector: &mut Vec<Co
         let (index0, index1) = get_indexes(i, gate_position, qubit_count);
         let sv0 = statevector[index0];
         let sv1 = statevector[index1];
+        
+        let m00 = operator.get(0,0);
+        let m01 = operator.get(0,1);
+        let m10 = operator.get(1,0);
+        let m11 = operator.get(1,1);
 
+        statevector[index0] = m00*sv0 + m10*sv1;
+        statevector[index1] = m01*sv0 + m11*sv1;
+    }
+}
+
+fn apply_controlled_operator(operator:MatrixOperator, statevector: &mut Vec<Complex32>, target: u8, qubit_count:u8, control:u8) {
+    let n = 1 << (qubit_count - 2);
+
+    let control_positon = if control < target { control } else { control-1 };
+    
+    for i in 0..n {
+        let (_, affected) = get_indexes(i, control_positon, qubit_count-1);
+
+        let (index0, index1) = get_indexes(affected, target, qubit_count);
+        let sv0 = statevector[index0];
+        let sv1 = statevector[index1];
         
         let m00 = operator.get(0,0);
         let m01 = operator.get(0,1);
@@ -140,11 +134,9 @@ fn apply_singel_qubit_operator(operator:MatrixOperator, statevector: &mut Vec<Co
 
 fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     let reversed_gate_position = qubit_count - gate_position - 1;
-    //let left_shift = 64-reversed_gate_position;
-    //let modulo = (i << left_shift) >> left_shift;
     let lowbits = i & MASKS[usize::from(reversed_gate_position)];
     let remainder = (i >> reversed_gate_position) << (reversed_gate_position+1);
-    let index0 = remainder | lowbits; //modulo;
+    let index0 = remainder | lowbits;
     let index1 = index0 | (1 << reversed_gate_position);
 
     (index0, index1)
@@ -221,93 +213,21 @@ fn get_singel_qubit_operator(gate:&Gate) -> MatrixOperator
     }
 }
 
-fn get_operator(gate:&Gate) ->  Box<dyn Operator>
+fn get_operator_for_controlled(gate:&Gate) ->  MatrixOperator
 {
-    let gate_name = gate.name.as_ref();
-    if gate_name == "ctrl-pauli-x" {
-        let control = match gate.control{
-            Some(control_value) => control_value,
-            None => panic!("ctrl-pauli-x for qubit {} has no value for control", gate.target)
-        };
-        let gate = gates::cx(((gate.target as i8-control as i8).abs()+1) as u8, control>gate.target);
-        return Box::new(gate);
-    }
-
-    let gate = match gate_name {
-        "measure-z" => gates::identity(1),
-        "pauli-x" => gates::pauli_x(),
-        "pauli-y" => gates::pauli_y(),
-        "pauli-z" => gates::pauli_z(),
-        "hadamard" => gates::hadamard(),
-        "t" => gates::t(),
-        "t-dagger" => gates::t_dagger(),
-        "s" => gates::s(),
-        "s-dagger" => gates::s_dagger(),
-        "sqrt-not" => gates::sqrt_not(),
-        "u" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("u for qubit {} has no value for phi", gate.target)
-            };
-            let theta = match gate.theta{
-                Some(theta_value) => theta_value,
-                None => panic!("u for qubit {} has no value for theta", gate.target)
-            };
-            let lambda = match gate.lambda{
-                Some(lambda_value) => lambda_value,
-                None => panic!("u for qubit {} has no value for lambda", gate.target)
-            };
-            gates::u3_gate(theta, phi, lambda)
-        },
-        "u-phi-theta" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("u-phi-theta for qubit {} has no value for phi", gate.target)
-            };
-            let theta = match gate.theta{
-                Some(theta_value) => theta_value,
-                None => panic!("u-phi-theta for qubit {} has no value for theta", gate.target)
-            };
-            gates::u_phi_theta(phi, theta)
-        },
-        "r-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("r-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::r_phi(phi)
-        },
-        "rx-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("rx-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::rx_phi(phi)
-        },
-        "ry-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("ry-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::ry_phi(phi)
-        },
-        "rz-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("rz-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::rz_phi(phi)
-        },
-        "swap" => {
-            let target2 = match gate.target2{
-                Some(target2_value) => target2_value,
-                None => panic!("swap for qubit {} has no value for target2", gate.target)
-            };
-            gates::swap(((gate.target as i8-target2 as i8).abs()+1) as u8)
-        },
-        nunknown_gate => panic!("Unknown operator {}", nunknown_gate)
+    //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
+    let single_qubit_gate_name = &gate.name[5..];
+    let single_qubit_gate = Gate {
+        name:single_qubit_gate_name.to_string(),
+        target:gate.target,
+        target2:gate.target2,
+        control:gate.control,
+        phi:gate.phi,
+        theta:gate.theta,
+        lambda:gate.lambda,
     };
-    Box::new(gate)
+
+    get_singel_qubit_operator(&single_qubit_gate)
 }
 
 fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {

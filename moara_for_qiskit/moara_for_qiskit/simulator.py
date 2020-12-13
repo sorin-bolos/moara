@@ -21,7 +21,7 @@ class MoaraSimulator(BaseBackend):
         'max_shots': MAX_SHOTS,
         'description': 'A simulator',
         'coupling_map': None,
-        'basis_gates': ['cx','id', 'x', 'y', 'z', 'h', 's', 'sdg', 't', 'tdg', 'u3', 'u2', 'u', 'sx', 'rx', 'ry', 'rz', 'swap'],
+        'basis_gates': ['cx','id', 'x', 'y', 'z', 'h', 's', 'sdg', 't', 'tdg', 'u3', 'u2', 'u', 'sx', 'rx', 'ry', 'rz', 'swap', 'crx'],
         'gates': []
 }
 
@@ -74,6 +74,8 @@ class MoaraSimulator(BaseBackend):
 
             elif instruction.name == 'cx':
                 gate = { 'name': 'ctrl-pauli-x', 'control':instruction.qubits[0], 'target':instruction.qubits[1] }
+            elif instruction.name == 'crx':
+                gate = { 'name': 'ctrl-rx-phi', 'control':instruction.qubits[0], 'target':instruction.qubits[1], 'phi': instruction.params[0] }
             elif instruction.name == 'swap':
                 gate = { 'name': 'swap', 'target':instruction.qubits[0], 'target2':instruction.qubits[1] }
 
