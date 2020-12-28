@@ -3,6 +3,11 @@ Moara is a high performance Quantum Computer Simulator.
 It comes in two flawors: the stand alone, executable, version dimmed **moara-for-uranium** and the one that can be used in Qiskit **moara-for-qiskit**.
 
 ## moara-for-qiskit
+Installation
+```
+pip install moara_for_qiskit
+```
+
 Usage
 ```
 from qiskit import QuantumCircuit, execute
