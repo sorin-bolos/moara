@@ -6,7 +6,7 @@ import json
 class MoaraSimulator(BaseBackend):
     
     NAME = 'moara_for_qiskit'
-    VERSION = '0.1'
+    VERSION = '0.2'
     MAX_QUBITS_COUNT = 20
     MAX_SHOTS = int(1e6)
 
