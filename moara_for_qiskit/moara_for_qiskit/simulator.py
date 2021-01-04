@@ -78,6 +78,8 @@ class MoaraSimulator(BaseBackend):
                 gate = { 'name': 'ctrl-rx-phi', 'control':instruction.qubits[0], 'target':instruction.qubits[1], 'phi': instruction.params[0] }
             elif instruction.name == 'swap':
                 gate = { 'name': 'swap', 'target':instruction.qubits[0], 'target2':instruction.qubits[1] }
+            elif instruction.name == 'measure':
+                gate = { 'name': 'measure-z', 'target':instruction.qubits[0] }
 
             if gate:
                 step = { 'index':index, 'gates':[gate] }
@@ -85,5 +87,5 @@ class MoaraSimulator(BaseBackend):
                 index += 1
                 
         serializedCircuit = json.dumps(circuit)
-        
+        print(serializedCircuit)
         return simulate(serializedCircuit, qobj.config.shots, experiment.config.n_qubits)
