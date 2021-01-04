@@ -205,7 +205,7 @@ fn get_singel_qubit_operator(gate:&Gate) -> [Complex32; 4]
                 None => panic!("rz-phi for qubit {} has no value for phi", gate.target)
             };
             gates::rz_phi(phi)
-        }
+        },
         nunknown_gate => panic!("Unknown operator {}", nunknown_gate)
     }
 }

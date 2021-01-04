@@ -87,5 +87,5 @@ class MoaraSimulator(BaseBackend):
                 index += 1
                 
         serializedCircuit = json.dumps(circuit)
-        print(serializedCircuit)
+        
         return simulate(serializedCircuit, qobj.config.shots, experiment.config.n_qubits)
