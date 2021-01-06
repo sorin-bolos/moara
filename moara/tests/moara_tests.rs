@@ -1,7 +1,7 @@
 #[cfg(test)]
 use std::process::Command;
 
-static PATH_TO_EXE: &str = "target/debug/moara_for_uranium.exe";
+static PATH_TO_EXE: &str = "target/debug/moara.exe";
 static FAILURE_MESSAGE: &str = "failed to execute process";
 
 #[test]

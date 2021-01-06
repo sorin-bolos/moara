@@ -1,8 +1,0 @@
-[package]
-name = "moara_for_uranium"
-version = "0.2.0"
-authors = ["Sorin Bolos <sorinalbolos@yahoo.com>", "Voicu Tomut <tomutvoicuandrei@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-moara = { path = "../moara" }
