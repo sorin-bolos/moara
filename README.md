@@ -36,7 +36,7 @@ Installation
 pip install pymoara
 ```
 
-### Usage with pyquil
+#### Usage with pyquil
 ```
 from pyquil import Program, get_qc
 from pyquil.gates import *
@@ -64,7 +64,7 @@ CONTROLLED #once
 DAGGER
 ```
 
-### Usage with cirq
+#### Usage with cirq
 ```
 import cirq
 from cirq.ops import *
@@ -87,7 +87,7 @@ Supported cirq gates
 MeasurementGate, IdentityGate, X, Y, Z, rx, ry, rz, XPowGate, YPowGat, ZPowGate, S, T, H, CNOT, CZPowGate
 ```
 
-### Result format
+#### Result format
 The result is returned as an array of 2^n values. The value at index i corresponds to the number of samples collected for the bitsring i.
 **Note:** *MoaraSimulator* threats all qubits as being measured at the end of the circuit (even the ones that don't have a measurement gate). The bitstrings are constructed in the order of qubits and do not follow the order of classical bits in the measurement gate formats present in pyquil. 
 
@@ -134,7 +134,7 @@ ex2. moara_for_uranium.exe circuit.json 1024 3
 If `no_of_shots` is not specified the defauld of `1024` is used.
 If `qubit_count` is not specified the number of qubits is infered from the circuit json.
 
-### Circuit json structure
+#### Circuit json structure
 The circuit json is composed of a main circuit object that has one element called `steps`. This element is a list of step objects.
 Each step object has an index of integer type and a list of `gates`.
 Each gate object has a `name (string)` and a `target (integer)`. Some gates may have other parameters like `control (integer)`, `phi (numeric)`, `theta (numeric)` and `lambda (numeric)`
