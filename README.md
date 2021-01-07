@@ -87,7 +87,7 @@ Supported cirq gates
 MeasurementGate, IdentityGate, X, Y, Z, rx, ry, rz, XPowGate, YPowGat, ZPowGate, S, T, H, CNOT, CZPowGate
 ```
 
-## Result format
+### Result format
 The result is returned as an array of 2^n values. The value at index i corresponds to the number of samples collected for the bitsring i.
 **Note:** *MoaraSimulator* threats all qubits as being measured at the end of the circuit (even the ones that don't have a measurement gate). The bitstrings are constructed in the order of qubits and do not follow the order of classical bits in the measurement gate formats present in pyquil. 
 
