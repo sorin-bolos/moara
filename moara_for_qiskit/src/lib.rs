@@ -6,11 +6,11 @@ use moara;
 
 #[pyfunction]
 #[text_signature = "(serialized_circuit, shots, qubit_count)"]
-pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) -> PyResult<HashMap<String, u32>> {
+pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>, little_endian:bool) -> PyResult<HashMap<String, u32>> {
     
     let result_vector = moara::simulate(serialized_circuit, shots, qubit_count);
 
-    let results = convert_to_hashmap(result_vector);
+    let results = convert_to_hashmap(result_vector, little_endian);
 
     Ok(results)
 }
@@ -22,13 +22,16 @@ fn moara_for_qiskit(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
-fn convert_to_hashmap(result_vector:Vec<u32>) -> HashMap<String, u32> {
+fn convert_to_hashmap(result_vector:Vec<u32>, little_endian:bool) -> HashMap<String, u32> {
     let qubit_count = (result_vector.len() as f64).log2() as usize;
     let mut results = HashMap::new();
     for (i, count) in result_vector.iter().enumerate() {
         if *count > 0u32 {
             let binary = format!("{:b}", i);
-            let padded = pad_to_width(binary, qubit_count);
+            let mut padded = pad_to_width(binary, qubit_count);
+            if little_endian {
+                padded = padded.chars().rev().collect::<String>()
+            }
             results.insert(padded, *count);
         }
     }

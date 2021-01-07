@@ -3,7 +3,7 @@ from qiskit.providers import BaseBackend
 from .moara_for_qiskit import simulate
 import json
 
-class MoaraSimulator(BaseBackend):
+class MoaraBackend(BaseBackend):
     
     NAME = 'moara_for_qiskit'
     VERSION = '0.2'
@@ -25,8 +25,9 @@ class MoaraSimulator(BaseBackend):
         'gates': []
 }
 
-    def __init__(self):
+    def __init__(self, little_endian=False):
        super().__init__(QasmBackendConfiguration.from_dict(self.CONFIGURATION), None)
+       self.little_endian = little_endian
 
     def run(self, qobj, backend_options=None, noise_model=None, validate=False):
         if not qobj or not qobj.experiments:
@@ -88,4 +89,4 @@ class MoaraSimulator(BaseBackend):
                 
         serializedCircuit = json.dumps(circuit)
         
-        return simulate(serializedCircuit, qobj.config.shots, experiment.config.n_qubits)
+        return simulate(serializedCircuit, qobj.config.shots, experiment.config.n_qubits, self.little_endian)
