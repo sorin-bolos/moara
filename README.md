@@ -1,6 +1,8 @@
 # moara
-Moara is a high performance Quantum Computer Simulator.
-It comes in two flawors: the stand alone, executable, version dimmed **moara-for-uranium** and the one that can be used in Qiskit **moara-for-qiskit**.
+Moara is a high performance Quantum Computer Simulator. It simulates a system with no noise.
+It comes in three flawors: the stand alone, executable, called simply **moara**; the version that can be used in Qiskit **moara-for-qiskit** and the version dimmed **pymoara** that can be used with PyQuil and Cirq.
+
+Note: The release versions are only built for use with Windows.
 
 ## moara-for-qiskit
 Installation
@@ -16,16 +18,80 @@ circuit.h(0)
 circuit.cx(0,1)
 circuit.measure_all()
 
-from moara_for_qiskit import MoaraSimulator
-simulator = MoaraSimulator()
+from moara_for_qiskit import MoaraBackend
+simulator = MoaraBackend()
 result = execute(circuit, simulator, shots=1024)
 print(result)
 ```
-**Note:** **mora_for_qiskit** simulator returns the bitstrings in Big Endian form.
-Meaning that the qubit 0 (the highest in the circuit design) is represented in the left-most classical bit in the returned bitstring.
-This is the reverse of the way Qiskit's usual backends return the bitstrings.
+By default *MoaraBackend* returns bitstrings in big-endian form (the reverse of what native Qiskit backends return). The left-most bit in the bitstring corresponds to the measured value of the firs qubit in the circuit (qubit[0]). This can be changed by a parameter in the constructor: `MoaraBackend(little_endian=True)`.
+Qiskit needs to be installed in the enviromnent in order to use `moara-for-qiskit`
+**Note:** *MoaraBackend* threats all qubits as being measured at the end of the circuit (even the ones that don't have a measurement gate). The bitstrings are constructed in the order of qubits and do not follow the order of classical bits in the measurement gate formats. 
 
-## moara-for-uranium
+## pymoara
+
+Pymoara has a stand alone simulator for use in python. This simulator supports circuits in the quil format and in the format used by cirq.
+
+Installation
+```
+pip install pymoara
+```
+
+### Usage with pyquil
+```
+from pyquil import Program, get_qc
+from pyquil.gates import *
+
+program = Program()
+ro = program.declare('ro', 'BIT', 2)
+program += H(0)
+program += CNOT(0,1)
+program += MEASURE(0, ro[0])
+program += MEASURE(1, ro[1])
+
+from pymoara import MoaraSimulator
+simulator = MoaraSimulator()
+result = simulator.run(program)
+print(result)
+```
+
+Supported quil gates and modifiers
+```
+# Gates
+I, X, Y, Z, H, S, RX(%theta), RY(%theta), RZ(%theta), PHASE(%theta), CNOT, CZ
+
+# Modifiers
+CONTROLLED #once
+DAGGER
+```
+
+### Usage with cirq
+```
+import cirq
+from cirq.ops import *
+
+qb = cirq.LineQubit.range(3)
+circ = cirq.Circuit()
+circ.append(H(qb[0]))
+circ.append(CNOT(qb[0], qb[1]))
+circ.append(cirq.measure(qb[0]))
+circ.append(cirq.measure(qb[1]))
+
+from pymoara import MoaraSimulator
+simulator = MoaraSimulator()
+result = simulator.run(circ)
+print(result)
+```
+
+Supported cirq gates
+```
+MeasurementGate, IdentityGate, X, Y, Z, rx, ry, rz, XPowGate, YPowGat, ZPowGate, S, T, H, CNOT, CZPowGate
+```
+
+## Result format
+The result is returned as an array of 2^n values. The value at index i corresponds to the number of samples collected for the bitsring i.
+**Note:** *MoaraSimulator* threats all qubits as being measured at the end of the circuit (even the ones that don't have a measurement gate). The bitstrings are constructed in the order of qubits and do not follow the order of classical bits in the measurement gate formats present in pyquil. 
+
+## moara.exe
 To use moara for uranium the circuit to be run needs to be saved in json for according to the below model;
 
 *circuit.json*
