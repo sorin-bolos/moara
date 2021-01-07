@@ -1,6 +1,18 @@
 class PyquilParser():
 
     SUPPORTED_GATES = [
+        'I',
+        'X',
+        'Y',
+        'Z',
+        'H',
+        'S',
+        'RX(%theta)',
+        'RY(%theta)',
+        'RZ(%theta)',
+        'PHASE(%theta)',
+        'CNOT',
+        'CZ',
     ]
 
     OPERATION_MAP = {
@@ -10,6 +22,7 @@ class PyquilParser():
         'Z':'pauli-z',
         'H':'hadamard',
         'S':'s',
+        'T':'t',
         'S-DAGGER':'s-dagger',
         'T-DAGGER':'t-dagger',
         'RX':'rx-phi',
@@ -26,6 +39,7 @@ class PyquilParser():
         'CONTROLLED-Z':'ctrl-pauli-z',
         'CONTROLLED-H':'ctrl-hadamard',
         'CONTROLLED-S':'ctrl-s',
+        'CONTROLLED-T':'ctrl-t',
         'CONTROLLED-S-DAGGER':'ctrl-s-dagger',
         'CONTROLLED-T-DAGGER':'ctrl-t-dagger',
         'CONTROLLED-RX':'ctrl-rx-phi',

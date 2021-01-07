@@ -1,5 +1,5 @@
 import json
-from .py_moara import simulate
+from .pymoara import simulate
 from .cirq_parser import CirqParser
 from .pyquil_parser import PyquilParser
 
