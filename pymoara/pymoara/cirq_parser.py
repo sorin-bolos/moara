@@ -38,7 +38,7 @@ class CirqParser():
                     gate = self._parse_cirq_controlled_gate_operation(operation, qubit_map)
                 
                 if gate == None:
-                    raise 'Could not parse cirq gate type'
+                    raise Exception('Could not parse cirq gate type')
 
                 gates.append(gate)
 
@@ -74,7 +74,7 @@ class CirqParser():
             return { 'name': 'rz-phi', 'target':qubit_map[gateOperation.qubits[0]], 'phi':np.pi*gateOperation.gate.exponent }
         elif gate_name == 'HPowGate':
             if gateOperation.gate.exponent != 1:
-                raise 'Exponent of H is not supported yet'
+                raise Exception('Exponent of H is not supported yet')
             return { 'name': 'hadamard', 'target':qubit_map[gateOperation.qubits[0]] }
         elif gate_name == 'CXPowGate':
             if gateOperation.gate.exponent == 1:
@@ -94,7 +94,7 @@ class CirqParser():
             return { 'name': 'ctrl-rz-phi', 'target':qubit_map[gateOperation.qubits[1]], 'control':qubit_map[gateOperation.qubits[0]], 'phi':np.pi*gateOperation.gate.exponent }
         elif gate_name == 'SwapPowGate':
             if gateOperation.gate.exponent != 1:
-                raise 'Exponent of SWAP is not supported yet'
+                raise Exception('Exponent of SWAP is not supported yet')
             return { 'name': 'swap', 'target':qubit_map[gateOperation.qubits[0]], 'target2':qubit_map[gateOperation.qubits[1]] }
         
         else:
@@ -104,10 +104,10 @@ class CirqParser():
         inner_operation = self._parse_cirq_gate_operation(gateOperation.sub_operation, qubit_map)
 
         if type(inner_operation) is list:
-            raise 'Controlled measurement is not supported'
+            raise Exception('Controlled measurement is not supported')
                 
         if len(gateOperation.controls) > 1 or inner_operation['name'].startswith('ctrl-'):
-            raise 'Multi-controlled gates are not supported yet'
+            raise Exception('Multi-controlled gates are not supported yet')
 
         if len(gateOperation.controls) == 1:
             inner_operation['control'] = qubit_map[gateOperation.controls[0]]

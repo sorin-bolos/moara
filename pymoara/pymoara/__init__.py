@@ -1,3 +1,3 @@
 from .moara_simulator import MoaraSimulator
 
-__version__ = '0.2'
+__version__ = '0.3'

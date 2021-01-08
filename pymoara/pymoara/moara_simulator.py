@@ -15,7 +15,7 @@ class MoaraSimulator():
         elif hasattr(circuit, '_instructions'):
             moara_circuit, qubits = PyquilParser().parse(circuit)
         elif hasattr(circuit, '_data'):
-            moara_circuit, qubits = self._parse_qiskit(circuit._data)
+            raise Exception("For use with Qiskit use moara_for_qiskit")
 
         if moara_circuit == None:
             raise Exception("Could not detect circuit source")

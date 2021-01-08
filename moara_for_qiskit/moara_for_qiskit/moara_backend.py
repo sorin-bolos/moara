@@ -6,7 +6,7 @@ import json
 class MoaraBackend(BaseBackend):
     
     NAME = 'moara_for_qiskit'
-    VERSION = '0.2'
+    VERSION = '0.3'
     MAX_QUBITS_COUNT = 20
     MAX_SHOTS = int(1e6)
 
@@ -33,6 +33,9 @@ class MoaraBackend(BaseBackend):
         if not qobj or not qobj.experiments:
             return {}
         experiment = qobj.experiments[0]
+
+        if len(qobj.experiments) > 1:
+            raise Exception('Multiple experiments are not supported yet.')
 
         circuit = { "steps":[] }
         index = 0
