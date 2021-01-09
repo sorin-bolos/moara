@@ -1,6 +1,6 @@
 [package]
 name = "moara"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Sorin Bolos <sorinalbolos@yahoo.com>", "Voicu Tomut <tomutvoicuandrei@gmail.com>"]
 edition = "2018"
 
