@@ -257,13 +257,13 @@ fn measure(statevector:Vec<Complex32>, shots:u32) -> Vec<u32> {
 }
 
 fn sample(statevector:&Vec<Complex32>, rng: &mut ThreadRng, len:usize) -> usize {
-    let sample:f32 = rng.gen();
-
-    let mut running_sum = 0.0;
+    let sample:f64 = rng.gen();
+    let mut running_sum:f64 = 0.0;
     let mut i = 0;
     while i < len {
-        let probability = statevector[i].norm_sqr();
-        running_sum += probability;
+        let re = statevector[i].re as f64;
+        let im = statevector[i].im as f64;
+        running_sum += re*re + im*im;
         if sample < running_sum
         {
             return i;
