@@ -1,0 +1,14 @@
+[package]
+name = "moara_js"
+version = "0.1.0"
+authors = ["Sorin Bolos <sorinalbolos@yahoo.com>"]
+edition = "2018"
+
+[lib]
+name = "moara_js"
+crate-type = ["cdylib"]
+
+[dependencies]
+moara = { path = "../moara" }
+getrandom = { version = "0.2", features = ["js"] }
+wasm-bindgen = "0.2"
