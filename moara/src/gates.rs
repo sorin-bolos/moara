@@ -78,3 +78,10 @@ pub fn rz_phi(phi:f32) -> [Complex32; 4] {
     let half_phi = phi/2f32;
     [C!(-half_phi*i).exp(), C!(0), C!(0), C!(half_phi*i).exp()]
 }
+
+pub fn swap() -> [Complex32; 16] {
+    [C!(1), C!(0), C!(0), C!(0),
+     C!(0), C!(0), C!(1), C!(0),
+     C!(0), C!(1), C!(0), C!(0),
+     C!(0), C!(0), C!(0), C!(1)]
+}

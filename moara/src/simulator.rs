@@ -1,4 +1,6 @@
 use std::collections::HashSet;
+use  std::cmp::max;
+use  std::cmp::min;
 use num_complex::Complex32;
 use rand::Rng;
 use rand::prelude::ThreadRng;
@@ -59,29 +61,43 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
             afected_qubits.insert(gate.target);
 
             match gate.target2 {
-                Some(_) => {
-                    panic!("Multi target gates are not supported yet.");
-                },
-                None => {}
-            }
-
-            match gate.control {
-                Some(qubit_control) => {
-                    if afected_qubits.contains(&qubit_control) {
-                        panic!("The qubit {} is mentioned twice in step {}", qubit_control, step.index);
+                Some(target2) => {
+                    match gate.control {
+                        Some(qubit_control) => { 
+                            if afected_qubits.contains(&qubit_control) {
+                                panic!("The qubit {} is mentioned twice in step {}", qubit_control, step.index);
+                            }
+                            afected_qubits.insert(qubit_control);
+                            
+                            let multi_target_operator = get_operator_for_double_target_controlled(&gate);
+                            apply_controlled_double_target_operator(multi_target_operator, &mut statevector, gate.target, target2, qubit_count, qubit_control);
+                         }
+                        None => {
+                            let multi_target_operator = get_double_target_operator(&gate);
+                            apply_double_target_operator(multi_target_operator, &mut statevector, gate.target, target2, qubit_count);
+                        }
                     }
-                    afected_qubits.insert(qubit_control);
-                    
-                    let singel_qubit_operator = get_operator_for_controlled(&gate);
-                    apply_controlled_operator(singel_qubit_operator, &mut statevector, gate.target, qubit_count, qubit_control);
                 },
                 None => {
-                    if gate.name == MEASUREMENT {
-                        measurements[gate.target as usize] = true;
-                        continue;
+                    match gate.control {
+                        Some(qubit_control) => {
+                            if afected_qubits.contains(&qubit_control) {
+                                panic!("The qubit {} is mentioned twice in step {}", qubit_control, step.index);
+                            }
+                            afected_qubits.insert(qubit_control);
+                            
+                            let single_qubit_operator = get_operator_for_controlled(&gate);
+                            apply_controlled_operator(single_qubit_operator, &mut statevector, gate.target, qubit_count, qubit_control);
+                        },
+                        None => {
+                            if gate.name == MEASUREMENT {
+                                measurements[gate.target as usize] = true;
+                                continue;
+                            }
+                            let single_qubit_operator = get_single_qubit_operator(&gate);
+                            apply_single_qubit_operator(single_qubit_operator, &mut statevector, gate.target, qubit_count);
+                        }
                     }
-                    let singel_qubit_operator = get_singel_qubit_operator(&gate);
-                    apply_singel_qubit_operator(singel_qubit_operator, &mut statevector, gate.target, qubit_count);
                 }
             }
         }
@@ -90,7 +106,7 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
     (statevector, measurements)
 }
 
-fn apply_singel_qubit_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, gate_position: u8, qubit_count:u8) {
+fn apply_single_qubit_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, gate_position: u8, qubit_count:u8) {
     let n = 1 << (qubit_count - 1);
     for i in 0..n {
         let (index0, index1) = get_indexes(i, gate_position, qubit_count);
@@ -102,8 +118,8 @@ fn apply_singel_qubit_operator(operator:[Complex32; 4], statevector: &mut Vec<Co
         let m10 = operator[2];
         let m11 = operator[3];
 
-        statevector[index0] = m00*sv0 + m10*sv1;
-        statevector[index1] = m01*sv0 + m11*sv1;
+        statevector[index0] = m00*sv0 + m01*sv1;
+        statevector[index1] = m10*sv0 + m11*sv1;
     }
 }
 
@@ -124,8 +140,93 @@ fn apply_controlled_operator(operator:[Complex32; 4], statevector: &mut Vec<Comp
         let m10 = operator[2];
         let m11 = operator[3];
 
-        statevector[index0] = m00*sv0 + m10*sv1;
-        statevector[index1] = m01*sv0 + m11*sv1;
+        statevector[index0] = m00*sv0 + m01*sv1;
+        statevector[index1] = m10*sv0 + m11*sv1;
+    }
+}
+
+fn apply_controlled_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<Complex32>, target1: u8, target2: u8, qubit_count:u8, control:u8) {
+    let n = 1 << (qubit_count - 3);
+
+    let control_positon = if control < target1 && control < target2 { control } 
+                          else { if (control < target1 && control > target2) || (control > target1 && control < target2)  { control-1 }
+                                 else { control-2 } };
+    
+    for i in 0..n {
+        let (_, affected) = get_indexes(i, control_positon, qubit_count-2);
+
+        let first = max(target1, target2);
+        let last = min(target1, target2);
+
+        let (index0, index1) = get_indexes(affected, first, qubit_count);
+        let (index00, index01) = get_indexes(index0, last, qubit_count);
+        let (index10, index11) = get_indexes(index1, last, qubit_count);
+
+        let sv00 = statevector[index00];
+        let sv01 = statevector[index01];
+        let sv10 = statevector[index10];
+        let sv11 = statevector[index11];
+        
+        let m0000 = operator[0];
+        let m0001 = operator[1];
+        let m0010 = operator[2];
+        let m0011 = operator[3];
+        let m0100 = operator[4];
+        let m0101 = operator[5];
+        let m0110 = operator[6];
+        let m0111 = operator[7];
+        let m1000 = operator[8];
+        let m1001 = operator[9];
+        let m1010 = operator[10];
+        let m1011 = operator[11];
+        let m1100 = operator[12];
+        let m1101 = operator[13];
+        let m1110 = operator[14];
+        let m1111 = operator[15];
+
+        statevector[index00] = m0000*sv00 + m0001*sv01 + m0010*sv10 + m0011*sv11;
+        statevector[index01] = m0100*sv00 + m0101*sv01 + m0110*sv10 + m0111*sv11;
+        statevector[index10] = m1000*sv00 + m1001*sv01 + m1010*sv10 + m1011*sv11;
+        statevector[index11] = m1100*sv00 + m1101*sv01 + m1110*sv10 + m1111*sv11;
+    }
+}
+
+fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<Complex32>, gate_position1: u8, gate_position2: u8, qubit_count:u8) {
+    let n = 1 << (qubit_count - 2);
+    for i in 0..n {
+        let first = max(gate_position2, gate_position1);
+        let last = min(gate_position2, gate_position1);
+
+        let (index0, index1) = get_indexes(i, first, qubit_count);
+        let (index00, index01) = get_indexes(index0, last, qubit_count);
+        let (index10, index11) = get_indexes(index1, last, qubit_count);
+
+        let sv00 = statevector[index00];
+        let sv01 = statevector[index01];
+        let sv10 = statevector[index10];
+        let sv11 = statevector[index11];
+        
+        let m0000 = operator[0];
+        let m0001 = operator[1];
+        let m0010 = operator[2];
+        let m0011 = operator[3];
+        let m0100 = operator[4];
+        let m0101 = operator[5];
+        let m0110 = operator[6];
+        let m0111 = operator[7];
+        let m1000 = operator[8];
+        let m1001 = operator[9];
+        let m1010 = operator[10];
+        let m1011 = operator[11];
+        let m1100 = operator[12];
+        let m1101 = operator[13];
+        let m1110 = operator[14];
+        let m1111 = operator[15];
+
+        statevector[index00] = m0000*sv00 + m0001*sv01 + m0010*sv10 + m0011*sv11;
+        statevector[index01] = m0100*sv00 + m0101*sv01 + m0110*sv10 + m0111*sv11;
+        statevector[index10] = m1000*sv00 + m1001*sv01 + m1010*sv10 + m1011*sv11;
+        statevector[index11] = m1100*sv00 + m1101*sv01 + m1110*sv10 + m1111*sv11;
     }
 }
 
@@ -139,10 +240,20 @@ fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     (index0, index1)
 }
 
-fn get_singel_qubit_operator(gate:&Gate) -> [Complex32; 4]
+fn get_double_target_operator(gate:&Gate) -> [Complex32; 16]
 {
     let gate_name = gate.name.as_ref();
     match gate_name {
+        "swap" => gates::swap(),
+        nunknown_gate => panic!("Unknown multi-taget operator {}", nunknown_gate)
+    }
+}
+
+fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4]
+{
+    let gate_name = gate.name.as_ref();
+    match gate_name {
+        "identity" => gates::identity(),
         "pauli-x" => gates::pauli_x(),
         "pauli-y" => gates::pauli_y(),
         "pauli-z" => gates::pauli_z(),
@@ -224,7 +335,24 @@ fn get_operator_for_controlled(gate:&Gate) ->  [Complex32; 4]
         lambda:gate.lambda,
     };
 
-    get_singel_qubit_operator(&single_qubit_gate)
+    get_single_qubit_operator(&single_qubit_gate)
+}
+
+fn get_operator_for_double_target_controlled(gate:&Gate) ->  [Complex32; 16]
+{
+    //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
+    let single_qubit_gate_name = &gate.name[5..];
+    let single_qubit_gate = Gate {
+        name:single_qubit_gate_name.to_string(),
+        target:gate.target,
+        target2:gate.target2,
+        control:gate.control,
+        phi:gate.phi,
+        theta:gate.theta,
+        lambda:gate.lambda,
+    };
+
+    get_double_target_operator(&single_qubit_gate)
 }
 
 fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
@@ -232,8 +360,23 @@ fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
 
     for step in &circuit.steps {
         for gate in &step.gates {
-            if gate.target+1 > qubit_count {
-                qubit_count = gate.target+1;
+
+            let mut mx = gate.target;
+            match gate.target2 {
+                Some(target2) => mx = max(mx, target2),
+                None => {}
+            };
+            match gate.control {
+                Some(control) => mx = max(mx, control),
+                None => {}
+            };
+            // match gate.control2 {
+            //     Some(control2) => mx = max(mx, control2),
+            //     None => {}
+            // };
+
+            if mx+1 > qubit_count {
+                qubit_count = mx+1;
             }
         }
     }

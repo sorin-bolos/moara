@@ -1,0 +1,31 @@
+{
+  "steps": [
+     {
+        "index": 0,
+        "gates": [
+           {
+              "name": "pauli-x",
+              "target": 0
+           },
+           {
+              "name": "pauli-x",
+              "target": 1
+           },
+           {
+              "name": "pauli-x",
+              "target": 2
+           }
+        ]
+     },
+     {
+        "index": 1,
+        "gates": [
+           {
+              "name": "swap",
+              "target": 0,
+              "target2": 2
+           }
+        ]
+     }
+  ]
+}

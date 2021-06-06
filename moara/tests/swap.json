@@ -1,0 +1,23 @@
+{
+  "steps": [
+     {
+        "index": 0,
+        "gates": [
+           {
+              "name": "pauli-x",
+              "target": 4
+           }
+        ]
+     },
+     {
+        "index": 1,
+        "gates": [
+           {
+              "name": "swap",
+              "target": 1,
+              "target2": 4
+           }
+        ]
+     }
+  ]
+}

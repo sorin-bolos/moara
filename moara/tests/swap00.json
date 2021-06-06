@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {
+      "index": 0,
+      "gates": [
+        {
+          "name": "swap",
+          "target": 0,
+          "target2": 1
+        }
+      ]
+    }
+  ]
+}

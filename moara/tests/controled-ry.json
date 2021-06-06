@@ -1,0 +1,43 @@
+{
+  "steps": [
+      {
+        "index": 0,
+        "gates": [
+          {
+            "name": "pauli-x",
+            "target": 0
+         }
+        ]
+    },
+     {
+        "index": 1,
+        "gates": [
+           {
+              "name": "ctrl-ry-phi",
+              "target": 1,
+              "control": 0,
+              "controlstate": "1",
+              "phi": 1.570796
+           }
+        ]
+     },
+     {
+        "index": 2,
+        "gates": [
+           {
+              "name": "hadamard",
+              "target": 1
+           }
+        ]
+     },
+     {
+        "index": 3,
+        "gates": [
+           {
+              "name": "s-dagger",
+              "target": 1
+           }
+        ]
+     }
+  ]
+}
