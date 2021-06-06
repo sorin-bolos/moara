@@ -22,6 +22,24 @@ pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) ->
     run(count, circuit, shots)
 }
 
+pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<Complex32>
+{
+    let circuit: Circuit = serde_json::from_str(&serialized_circuit).unwrap();
+
+    let count = match qubit_count {
+        Some(working_qubit_count) => working_qubit_count,
+        None => get_qubit_count_from_circuit(&circuit)
+    };
+
+    if count == 0 {
+        return vec![];
+    }
+
+    let (final_statevector, _) = get_final_statevector(count, circuit);
+
+    final_statevector
+}
+
 fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
 {
     if qubit_count == 0 {
