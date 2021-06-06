@@ -1,0 +1,86 @@
+{
+  "steps": [
+     {
+        "index": 2,
+        "gates": [
+           {
+              "name": "hadamard",
+              "target": 0
+           }
+        ]
+     },
+     {
+        "index": 3,
+        "gates": [
+           {
+              "name": "s-dagger",
+              "target": 0
+           }
+        ]
+     },
+     {
+        "index": 4,
+        "gates": [
+           {
+              "name": "xx",
+              "target": 0,
+              "target2": 2,
+              "theta": 2
+           }
+        ]
+     },
+     {
+        "index": 5,
+        "gates": [
+           {
+              "name": "yy",
+              "target": 1,
+              "target2": 3,
+              "theta": 1
+           }
+        ]
+     },
+     {
+        "index": 6,
+        "gates": [
+           {
+              "name": "zz",
+              "target": 2,
+              "target2": 3,
+              "theta": 0
+           }
+        ]
+     },
+     {
+        "index": 7,
+        "gates": [
+           {
+              "name": "swap-phi",
+              "target": 0,
+              "target2": 2,
+              "phi": 1
+           }
+        ]
+     },
+     {
+        "index": 8,
+        "gates": [
+           {
+              "name": "sqrt-swap",
+              "target": 1,
+              "target2": 3
+           }
+        ]
+     },
+     {
+        "index": 9,
+        "gates": [
+           {
+              "name": "iswap",
+              "target": 1,
+              "target2": 2
+           }
+        ]
+     }
+  ]
+}

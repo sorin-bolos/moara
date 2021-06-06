@@ -85,3 +85,55 @@ pub fn swap() -> [Complex32; 16] {
      C!(0), C!(1), C!(0), C!(0),
      C!(0), C!(0), C!(0), C!(1)]
 }
+
+pub fn swap_with_add_phase(phase:f32) -> [Complex32; 16] {
+    [C!(1), C!(0), C!(0), C!(0),
+     C!(0), C!(0), C!(phase*i).exp(), C!(0),
+     C!(0), C!(phase*i).exp(), C!(0), C!(0),
+     C!(0), C!(0), C!(0), C!(1)]
+}
+
+pub fn iswap() -> [Complex32; 16] {
+    [C!(1), C!(0), C!(0), C!(0),
+     C!(0), C!(0), C!(1*i), C!(0),
+     C!(0), C!(1*i), C!(0), C!(0),
+     C!(0), C!(0), C!(0), C!(1)]
+}
+
+pub fn sqrt_swap() -> [Complex32; 16] {
+    [C!(1), C!(0), C!(0), C!(0),
+     C!(0), C!(0), C!(1+1*i)*0.5, C!(0),
+     C!(0), C!(1+1*i)*0.5, C!(0), C!(0),
+     C!(0), C!(0), C!(0), C!(1)]
+}
+
+pub fn xx(theta:f32) -> [Complex32; 16] {
+    let half_phi = theta/2f32;
+    let a = C!((half_phi.cos()));
+    let b = C!(-1*i)*half_phi.sin();
+
+    [a, C!(0), C!(0), b,
+     C!(0), a, b, C!(0),
+     C!(0), b, a, C!(0),
+     b, C!(0), C!(0), a]
+}
+
+pub fn yy(theta:f32) -> [Complex32; 16] {
+    let half_phi = theta/2f32;
+    let a = C!((half_phi.cos()));
+    let b = C!(1*i)*half_phi.sin();
+
+    [a, C!(0), C!(0), b,
+     C!(0), a, -b, C!(0),
+     C!(0), -b, a, C!(0),
+     b, C!(0), C!(0), a]
+}
+
+pub fn zz(theta:f32) -> [Complex32; 16] {
+    let a = C!(-theta*i).exp();
+
+    [C!(1), C!(0), C!(0), C!(0),
+     C!(0), a, C!(0), C!(0),
+     C!(0), C!(0), a, C!(0),
+     C!(0), C!(0), C!(0), C!(1)]
+}

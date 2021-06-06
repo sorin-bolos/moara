@@ -245,6 +245,36 @@ fn get_double_target_operator(gate:&Gate) -> [Complex32; 16]
     let gate_name = gate.name.as_ref();
     match gate_name {
         "swap" => gates::swap(),
+        "iswap" => gates::iswap(),
+        "sqrt-swap" => gates::sqrt_swap(),
+        "swap-phi" => {
+            let phi = match gate.phi{
+                Some(phi_value) => phi_value,
+                None => panic!("swap-phi for qubit {} has no value for phi", gate.target)
+            };
+            gates::swap_with_add_phase(phi)
+        },
+        "xx" => {
+            let theta = match gate.theta{
+                Some(theta_value) => theta_value,
+                None => panic!("xx for qubit {} has no value for theta", gate.target)
+            };
+            gates::xx(theta)
+        }
+        "yy" => {
+            let theta = match gate.theta{
+                Some(theta_value) => theta_value,
+                None => panic!("yy for qubit {} has no value for theta", gate.target)
+            };
+            gates::yy(theta)
+        }
+        "zz" => {
+            let theta = match gate.theta{
+                Some(theta_value) => theta_value,
+                None => panic!("zz for qubit {} has no value for theta", gate.target)
+            };
+            gates::zz(theta)
+        }
         nunknown_gate => panic!("Unknown multi-taget operator {}", nunknown_gate)
     }
 }
