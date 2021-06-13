@@ -209,7 +209,7 @@ pub fn get_toffoli_operator(control2:u8, target:u8, control_on_zero2:bool) -> [C
         }
     } else {
         if control2 > target {
-            gates::c1x0_1()
+            gates::c0x1_1()
         } else { 
             gates::c1x0_1()
         }

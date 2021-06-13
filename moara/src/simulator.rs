@@ -350,10 +350,10 @@ pub fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
                 Some(control) => mx = max(mx, control),
                 None => {}
             };
-            // match gate.control2 {
-            //     Some(control2) => mx = max(mx, control2),
-            //     None => {}
-            // };
+            match gate.control2 {
+                Some(control2) => mx = max(mx, control2),
+                None => {}
+            };
 
             if mx+1 > qubit_count {
                 qubit_count = mx+1;

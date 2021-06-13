@@ -1,0 +1,19 @@
+{
+   "version": "1.0",
+   "circuit-type": "simple",
+   "steps": [
+     {
+       "index": 3,
+       "gates": [
+         {
+           "name": "toffoli",
+           "target": 2,
+           "control": 3,
+           "controlstate": 1,
+           "control2": 4,
+           "controlstate2": 1
+         }
+       ]
+     }
+   ]
+ }
