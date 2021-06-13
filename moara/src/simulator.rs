@@ -1,12 +1,11 @@
-use std::collections::HashSet;
 use  std::cmp::max;
 use  std::cmp::min;
+use std::collections::HashSet;
 use num_complex::Complex32;
 use rand::Rng;
 use rand::prelude::ThreadRng;
 use super::circuit::Circuit;
-use super::circuit::Gate;
-use crate::gates;
+use super::gate_mapper;
 
 const MEASUREMENT: &str = "measure-z";
 
@@ -39,7 +38,7 @@ pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec
 }
 
 pub fn get_probabilities(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<f32> {
-    let statevector = get_statevector(serialized_circuit, qubit_count)
+    let statevector = get_statevector(serialized_circuit, qubit_count);
     let len = statevector.len();
     let mut probabilities = vec![0f32; len];
 
@@ -95,12 +94,14 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
                             }
                             afected_qubits.insert(qubit_control);
                             
-                            let multi_target_operator = get_operator_for_double_target_controlled(&gate);
-                            apply_controlled_double_target_operator(multi_target_operator, &mut statevector, gate.target, target2, qubit_count, qubit_control);
+                            let target = gate.target;
+                            let multi_target_operator = gate_mapper::get_operator_for_double_target_controlled(gate);
+                            apply_controlled_double_target_operator(multi_target_operator, &mut statevector, target, target2, qubit_count, qubit_control);
                          }
                         None => {
-                            let multi_target_operator = get_double_target_operator(&gate);
-                            apply_double_target_operator(multi_target_operator, &mut statevector, gate.target, target2, qubit_count);
+                            let target = gate.target;
+                            let multi_target_operator = gate_mapper::get_double_target_operator(gate);
+                            apply_double_target_operator(multi_target_operator, &mut statevector, target, target2, qubit_count);
                         }
                     }
                 },
@@ -112,16 +113,18 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
                             }
                             afected_qubits.insert(qubit_control);
                             
-                            let single_qubit_operator = get_operator_for_controlled(&gate);
-                            apply_controlled_operator(single_qubit_operator, &mut statevector, gate.target, qubit_count, qubit_control);
+                            let target = gate.target;
+                            let single_qubit_operator = gate_mapper::get_operator_for_controlled(gate);
+                            apply_controlled_operator(single_qubit_operator, &mut statevector, target, qubit_count, qubit_control);
                         },
                         None => {
                             if gate.name == MEASUREMENT {
                                 measurements[gate.target as usize] = true;
                                 continue;
                             }
-                            let single_qubit_operator = get_single_qubit_operator(&gate);
-                            apply_single_qubit_operator(single_qubit_operator, &mut statevector, gate.target, qubit_count);
+                            let target = gate.target;
+                            let single_qubit_operator = gate_mapper::get_single_qubit_operator(gate);
+                            apply_single_qubit_operator(single_qubit_operator, &mut statevector, target, qubit_count);
                         }
                     }
                 }
@@ -266,176 +269,6 @@ fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     (index0, index1)
 }
 
-fn get_double_target_operator(gate:&Gate) -> [Complex32; 16] {
-    let gate_name = gate.name.as_ref();
-    match gate_name {
-        "swap" => gates::swap(),
-        "iswap" => gates::iswap(),
-        "sqrt-swap" => gates::sqrt_swap(),
-        "swap-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("swap-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::swap_with_add_phase(phi)
-        },
-        "xx" => {
-            let theta = match gate.theta{
-                Some(theta_value) => theta_value,
-                None => panic!("xx for qubit {} has no value for theta", gate.target)
-            };
-            gates::xx(theta)
-        }
-        "yy" => {
-            let theta = match gate.theta{
-                Some(theta_value) => theta_value,
-                None => panic!("yy for qubit {} has no value for theta", gate.target)
-            };
-            gates::yy(theta)
-        }
-        "zz" => {
-            let theta = match gate.theta{
-                Some(theta_value) => theta_value,
-                None => panic!("zz for qubit {} has no value for theta", gate.target)
-            };
-            gates::zz(theta)
-        }
-        nunknown_gate => panic!("Unknown multi-taget operator {}", nunknown_gate)
-    }
-}
-
-fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4] {
-    let gate_name = gate.name.as_ref();
-    match gate_name {
-        "identity" => gates::identity(),
-        "pauli-x" => gates::pauli_x(),
-        "pauli-y" => gates::pauli_y(),
-        "pauli-z" => gates::pauli_z(),
-        "hadamard" => gates::hadamard(),
-        "t" => gates::t(),
-        "t-dagger" => gates::t_dagger(),
-        "s" => gates::s(),
-        "s-dagger" => gates::s_dagger(),
-        "sqrt-not" => gates::sqrt_not(),
-        "u" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("u for qubit {} has no value for phi", gate.target)
-            };
-            let theta = match gate.theta{
-                Some(theta_value) => theta_value,
-                None => panic!("u for qubit {} has no value for theta", gate.target)
-            };
-            let lambda = match gate.lambda{
-                Some(lambda_value) => lambda_value,
-                None => panic!("u for qubit {} has no value for lambda", gate.target)
-            };
-            gates::u3_gate(theta, phi, lambda)
-        },
-        "u-phi-theta" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("u-phi-theta for qubit {} has no value for phi", gate.target)
-            };
-            let theta = match gate.theta{
-                Some(theta_value) => theta_value,
-                None => panic!("u-phi-theta for qubit {} has no value for theta", gate.target)
-            };
-            gates::u_phi_theta(phi, theta)
-        },
-        "r-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("r-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::r_phi(phi)
-        },
-        "rx-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("rx-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::rx_phi(phi)
-        },
-        "ry-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("ry-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::ry_phi(phi)
-        },
-        "rz-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("rz-phi for qubit {} has no value for phi", gate.target)
-            };
-            gates::rz_phi(phi)
-        },
-        nunknown_gate => panic!("Unknown operator {}", nunknown_gate)
-    }
-}
-
-fn get_operator_for_controlled(gate:&Gate) ->  [Complex32; 4] {
-    //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
-    let single_qubit_gate_name = &gate.name[5..];
-    let single_qubit_gate = Gate {
-        name:single_qubit_gate_name.to_string(),
-        target:gate.target,
-        target2:gate.target2,
-        control:gate.control,
-        phi:gate.phi,
-        theta:gate.theta,
-        lambda:gate.lambda,
-    };
-
-    get_single_qubit_operator(&single_qubit_gate)
-}
-
-fn get_operator_for_double_target_controlled(gate:&Gate) ->  [Complex32; 16] {
-    //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
-    let single_qubit_gate_name = &gate.name[5..];
-    let single_qubit_gate = Gate {
-        name:single_qubit_gate_name.to_string(),
-        target:gate.target,
-        target2:gate.target2,
-        control:gate.control,
-        phi:gate.phi,
-        theta:gate.theta,
-        lambda:gate.lambda,
-    };
-
-    get_double_target_operator(&single_qubit_gate)
-}
-
-fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
-    let mut qubit_count = 0;
-
-    for step in &circuit.steps {
-        for gate in &step.gates {
-
-            let mut mx = gate.target;
-            match gate.target2 {
-                Some(target2) => mx = max(mx, target2),
-                None => {}
-            };
-            match gate.control {
-                Some(control) => mx = max(mx, control),
-                None => {}
-            };
-            // match gate.control2 {
-            //     Some(control2) => mx = max(mx, control2),
-            //     None => {}
-            // };
-
-            if mx+1 > qubit_count {
-                qubit_count = mx+1;
-            }
-        }
-    }
-
-    qubit_count
-}
-
 fn measure(statevector:Vec<Complex32>, shots:u32) -> Vec<u32> {
     let mut rng = rand::thread_rng();
     let len = statevector.len();
@@ -467,6 +300,35 @@ fn sample(statevector:&Vec<Complex32>, rng: &mut ThreadRng, len:usize) -> usize 
     }
 
     panic!("Sample was not in the expected interval");
+}
+
+pub fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
+    let mut qubit_count = 0;
+
+    for step in &circuit.steps {
+        for gate in &step.gates {
+
+            let mut mx = gate.target;
+            match gate.target2 {
+                Some(target2) => mx = max(mx, target2),
+                None => {}
+            };
+            match gate.control {
+                Some(control) => mx = max(mx, control),
+                None => {}
+            };
+            // match gate.control2 {
+            //     Some(control2) => mx = max(mx, control2),
+            //     None => {}
+            // };
+
+            if mx+1 > qubit_count {
+                qubit_count = mx+1;
+            }
+        }
+    }
+
+    qubit_count
 }
 
 #[cfg(target_pointer_width = "64")]

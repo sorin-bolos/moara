@@ -25,6 +25,7 @@ pub struct Gate
     pub phi:Option<f32>,
     pub theta:Option<f32>,
     pub lambda:Option<f32>,
+    pub root:Option<String>,
 }
 
 impl Gate {
