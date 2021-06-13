@@ -22,6 +22,7 @@ pub struct Gate
     pub target:u8,
     pub target2:Option<u8>,
     pub control:Option<u8>,
+    pub controlstate:Option<u8>,
     pub phi:Option<f32>,
     pub theta:Option<f32>,
     pub lambda:Option<f32>,

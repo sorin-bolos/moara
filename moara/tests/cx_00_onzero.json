@@ -1,0 +1,1 @@
+{"steps": [{"index": 1,"gates": [{"name": "ctrl-pauli-x","target": 1,"control": 0, "controlstate":0}]} ]}

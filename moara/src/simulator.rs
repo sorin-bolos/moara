@@ -93,10 +93,15 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
                                 panic!("The qubit {} is mentioned twice in step {}", qubit_control, step.index);
                             }
                             afected_qubits.insert(qubit_control);
+
+                            let control_on_zero = match gate.controlstate {
+                                Some(val) => val == 0,
+                                None => false
+                            };
                             
                             let target = gate.target;
                             let multi_target_operator = gate_mapper::get_operator_for_double_target_controlled(gate);
-                            apply_controlled_double_target_operator(multi_target_operator, &mut statevector, target, target2, qubit_count, qubit_control);
+                            apply_controlled_double_target_operator(multi_target_operator, &mut statevector, target, target2, qubit_count, qubit_control, control_on_zero);
                          }
                         None => {
                             let target = gate.target;
@@ -112,10 +117,15 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
                                 panic!("The qubit {} is mentioned twice in step {}", qubit_control, step.index);
                             }
                             afected_qubits.insert(qubit_control);
+
+                            let control_on_zero = match gate.controlstate {
+                                Some(val) => val == 0,
+                                None => false
+                            };
                             
                             let target = gate.target;
                             let single_qubit_operator = gate_mapper::get_operator_for_controlled(gate);
-                            apply_controlled_operator(single_qubit_operator, &mut statevector, target, qubit_count, qubit_control);
+                            apply_controlled_operator(single_qubit_operator, &mut statevector, target, qubit_count, qubit_control, control_on_zero);
                         },
                         None => {
                             if gate.name == MEASUREMENT {
@@ -152,13 +162,14 @@ fn apply_single_qubit_operator(operator:[Complex32; 4], statevector: &mut Vec<Co
     }
 }
 
-fn apply_controlled_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, target: u8, qubit_count:u8, control:u8) {
+fn apply_controlled_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, target: u8, qubit_count:u8, control:u8, control_on_zero:bool) {
     let n = 1 << (qubit_count - 2);
 
     let control_positon = if control < target { control } else { control-1 };
     
     for i in 0..n {
-        let (_, affected) = get_indexes(i, control_positon, qubit_count-1);
+        let (affected0, affected1) = get_indexes(i, control_positon, qubit_count-1);
+        let affected = if control_on_zero { affected0 } else { affected1 };
 
         let (index0, index1) = get_indexes(affected, target, qubit_count);
         let sv0 = statevector[index0];
@@ -174,7 +185,7 @@ fn apply_controlled_operator(operator:[Complex32; 4], statevector: &mut Vec<Comp
     }
 }
 
-fn apply_controlled_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<Complex32>, target1: u8, target2: u8, qubit_count:u8, control:u8) {
+fn apply_controlled_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<Complex32>, target1: u8, target2: u8, qubit_count:u8, control:u8, control_on_zero:bool) {
     let n = 1 << (qubit_count - 3);
 
     let control_positon = if control < target1 && control < target2 { control } 
@@ -182,7 +193,8 @@ fn apply_controlled_double_target_operator(operator:[Complex32; 16], statevector
                                  else { control-2 } };
     
     for i in 0..n {
-        let (_, affected) = get_indexes(i, control_positon, qubit_count-2);
+        let (affected0, affected1) = get_indexes(i, control_positon, qubit_count-2);
+        let affected = if control_on_zero { affected0 } else { affected1 };
 
         let first = max(target1, target2);
         let last = min(target1, target2);
