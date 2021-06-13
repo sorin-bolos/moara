@@ -163,6 +163,8 @@ pub fn get_operator_for_controlled(gate:Gate) ->  [Complex32; 4] {
         target2:gate.target2,
         control:gate.control,
         controlstate:gate.controlstate,
+        control2:gate.control2,
+        controlstate2:gate.controlstate2,
         phi:gate.phi,
         theta:gate.theta,
         lambda:gate.lambda,
@@ -173,6 +175,11 @@ pub fn get_operator_for_controlled(gate:Gate) ->  [Complex32; 4] {
 }
 
 pub fn get_operator_for_double_target_controlled(gate:Gate) ->  [Complex32; 16] {
+        
+    match &gate.name[..] {
+        "fredkin" => { return gates::swap() },
+        _ => { }
+    }
 
     //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
     let single_qubit_gate_name = &gate.name[5..];
@@ -182,6 +189,8 @@ pub fn get_operator_for_double_target_controlled(gate:Gate) ->  [Complex32; 16] 
         target2:gate.target2,
         control:gate.control,
         controlstate:gate.controlstate,
+        control2:gate.control2,
+        controlstate2:gate.controlstate2,
         phi:gate.phi,
         theta:gate.theta,
         lambda:gate.lambda,
@@ -189,6 +198,22 @@ pub fn get_operator_for_double_target_controlled(gate:Gate) ->  [Complex32; 16] 
     };
 
     get_double_target_operator(single_qubit_gate)
+}
+
+pub fn get_toffoli_operator(control2:u8, target:u8, control_on_zero2:bool) -> [Complex32; 16] {
+    if control_on_zero2 {
+        if control2 > target {
+            gates::c0x1_0()
+        } else { 
+            gates::c1x0_0()
+        }
+    } else {
+        if control2 > target {
+            gates::c1x0_1()
+        } else { 
+            gates::c1x0_1()
+        }
+    }
 }
 
 fn get_value_from_root(root_value: &String) -> f32 {
@@ -202,5 +227,4 @@ fn get_value_from_root(root_value: &String) -> f32 {
         let t = t_str.parse::<f32>().unwrap();
         2f32.powf(t)
     }
-
 }

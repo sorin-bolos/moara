@@ -5,9 +5,12 @@ use num_complex::Complex32;
 use rand::Rng;
 use rand::prelude::ThreadRng;
 use super::circuit::Circuit;
+use super::circuit::Gate;
 use super::gate_mapper;
 
-const MEASUREMENT: &str = "measure-z";
+const MEASUREMENT_X: &str = "measure-x";
+const MEASUREMENT_Y: &str = "measure-y";
+const MEASUREMENT_Z: &str = "measure-z";
 
 pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) -> Vec<u32> {
     let circuit: Circuit = serde_json::from_str(&serialized_circuit).unwrap();
@@ -122,13 +125,17 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
                                 Some(val) => val == 0,
                                 None => false
                             };
-                            
                             let target = gate.target;
-                            let single_qubit_operator = gate_mapper::get_operator_for_controlled(gate);
-                            apply_controlled_operator(single_qubit_operator, &mut statevector, target, qubit_count, qubit_control, control_on_zero);
+
+                            if gate.name == "toffoli" {
+                                 apply_toffoli(gate, &mut statevector, target, qubit_control, control_on_zero, qubit_count, step.index)
+                            } else {
+                                let single_qubit_operator = gate_mapper::get_operator_for_controlled(gate);
+                                apply_controlled_operator(single_qubit_operator, &mut statevector, target, qubit_count, qubit_control, control_on_zero);
+                            }
                         },
                         None => {
-                            if gate.name == MEASUREMENT {
+                            if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
                                 measurements[gate.target as usize] = true;
                                 continue;
                             }
@@ -268,6 +275,20 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
         statevector[index01] = m0100*sv00 + m0101*sv01 + m0110*sv10 + m0111*sv11;
         statevector[index10] = m1000*sv00 + m1001*sv01 + m1010*sv10 + m1011*sv11;
         statevector[index11] = m1100*sv00 + m1101*sv01 + m1110*sv10 + m1111*sv11;
+    }
+}
+
+fn apply_toffoli(gate:Gate,mut statevector:&mut Vec<Complex32>, target:u8, qubit_control:u8, control_on_zero:bool, qubit_count:u8, step_index:u16) {
+    match gate.control2 {
+        Some(control2) => {
+            let control_on_zero2 = match gate.controlstate2 {
+                Some(val) => val == 0,
+                None => false
+            };
+            let operator = gate_mapper::get_toffoli_operator(control2, target, control_on_zero2);
+            apply_controlled_double_target_operator(operator, &mut statevector, target, control2, qubit_count, qubit_control, control_on_zero);
+        },
+        None => { panic!("The toffoli gate in step {} on target {} has no controll2", step_index, target); }
     }
 }
 
