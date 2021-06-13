@@ -10,8 +10,7 @@ use crate::gates;
 
 const MEASUREMENT: &str = "measure-z";
 
-pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) -> Vec<u32>
-{
+pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) -> Vec<u32> {
     let circuit: Circuit = serde_json::from_str(&serialized_circuit).unwrap();
 
     let count = match qubit_count {
@@ -22,8 +21,7 @@ pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) ->
     run(count, circuit, shots)
 }
 
-pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<Complex32>
-{
+pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<Complex32> {
     let circuit: Circuit = serde_json::from_str(&serialized_circuit).unwrap();
 
     let count = match qubit_count {
@@ -40,8 +38,19 @@ pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec
     final_statevector
 }
 
-fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
-{
+pub fn get_probabilities(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<f32> {
+    let statevector = get_statevector(serialized_circuit, qubit_count)
+    let len = statevector.len();
+    let mut probabilities = vec![0f32; len];
+
+    for i in 0..len {
+        probabilities[i] = statevector[i].norm_sqr();
+    }
+
+    probabilities
+}
+
+fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32> {
     if qubit_count == 0 {
         return vec![];
     }
@@ -57,8 +66,7 @@ fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32>
     samples
 }
 
-fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Vec<bool>)
-{
+fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Vec<bool>) {
     let mut measurements = vec![false; qubit_count as usize];
 
     let mut ordered_steps = circuit.steps;
@@ -258,8 +266,7 @@ fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     (index0, index1)
 }
 
-fn get_double_target_operator(gate:&Gate) -> [Complex32; 16]
-{
+fn get_double_target_operator(gate:&Gate) -> [Complex32; 16] {
     let gate_name = gate.name.as_ref();
     match gate_name {
         "swap" => gates::swap(),
@@ -297,8 +304,7 @@ fn get_double_target_operator(gate:&Gate) -> [Complex32; 16]
     }
 }
 
-fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4]
-{
+fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4] {
     let gate_name = gate.name.as_ref();
     match gate_name {
         "identity" => gates::identity(),
@@ -369,8 +375,7 @@ fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4]
     }
 }
 
-fn get_operator_for_controlled(gate:&Gate) ->  [Complex32; 4]
-{
+fn get_operator_for_controlled(gate:&Gate) ->  [Complex32; 4] {
     //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
     let single_qubit_gate_name = &gate.name[5..];
     let single_qubit_gate = Gate {
@@ -386,8 +391,7 @@ fn get_operator_for_controlled(gate:&Gate) ->  [Complex32; 4]
     get_single_qubit_operator(&single_qubit_gate)
 }
 
-fn get_operator_for_double_target_controlled(gate:&Gate) ->  [Complex32; 16]
-{
+fn get_operator_for_double_target_controlled(gate:&Gate) ->  [Complex32; 16] {
     //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
     let single_qubit_gate_name = &gate.name[5..];
     let single_qubit_gate = Gate {

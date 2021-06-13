@@ -16,3 +16,8 @@ pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec
 {
     simulator::get_statevector(serialized_circuit, qubit_count)
 }
+
+pub fn get_probabilities(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<f32>
+{
+    simulator::get_probabilities(serialized_circuit, qubit_count)
+}
