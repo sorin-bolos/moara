@@ -1,5 +1,5 @@
-use  std::cmp::max;
-use  std::cmp::min;
+use std::cmp::max;
+use std::cmp::min;
 use std::collections::HashSet;
 use num_complex::Complex32;
 use rand::Rng;
