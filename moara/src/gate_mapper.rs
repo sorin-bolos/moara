@@ -1,5 +1,4 @@
 use num_complex::Complex32;
-use std::f32::consts::PI;
 use super::circuit::Gate;
 use super::gates;
 
@@ -37,7 +36,7 @@ pub fn get_double_target_operator(gate:Gate) -> [Complex32; 16] {
             };
             gates::zz(theta)
         }
-        nunknown_gate => panic!("Unknown multi-taget operator {}", nunknown_gate)
+        unknown_gate => panic!("Unknown multi-taget operator {}", unknown_gate)
     }
 }
 
@@ -99,14 +98,14 @@ pub fn get_single_qubit_operator(gate:Gate) -> [Complex32; 4] {
                 Some(root_value) => get_value_from_root(root_value),
                 None => panic!("pauli-x-root for qubit {} has no value for root", gate.target)
             };
-            gates::rx_theta(PI/root)
+            gates::pauli_x_root(root)
         },
         "pauli-x-root-dagger" => {
             let root = match &gate.root{
                 Some(root_value) => get_value_from_root(root_value),
                 None => panic!("pauli-x-root for qubit {} has no value for root", gate.target)
             };
-            gates::rx_theta(-PI/root)
+            gates::pauli_x_root_dagger(root)
         },
         "ry-theta" => {
             let theta = match gate.theta{
@@ -120,14 +119,14 @@ pub fn get_single_qubit_operator(gate:Gate) -> [Complex32; 4] {
                 Some(root_value) => get_value_from_root(root_value),
                 None => panic!("pauli-y-root for qubit {} has no value for root", gate.target)
             };
-            gates::ry_theta(PI/root)
+            gates::pauli_y_root(root)
         },
         "pauli-y-root-dagger" => {
             let root = match &gate.root{
                 Some(root_value) => get_value_from_root(root_value),
                 None => panic!("pauli-y-root for qubit {} has no value for root", gate.target)
             };
-            gates::ry_theta(-PI/root)
+            gates::pauli_y_root_dagger(root)
         },
         "rz-theta" => {
             let theta = match gate.theta{
@@ -141,14 +140,14 @@ pub fn get_single_qubit_operator(gate:Gate) -> [Complex32; 4] {
                 Some(root_value) => get_value_from_root(root_value),
                 None => panic!("pauli-z-root for qubit {} has no value for root", gate.target)
             };
-            gates::rz_theta(PI/root)
+            gates::pauli_z_root(root)
         },
         "pauli-z-root-dagger" => {
             let root = match &gate.root{
                 Some(root_value) => get_value_from_root(root_value),
                 None => panic!("pauli-z-root for qubit {} has no value for root", gate.target)
             };
-            gates::rz_theta(-PI/root)
+            gates::pauli_z_root_dagger(root)
         },
         "measure-x" => {
             gates::hadamard()
@@ -233,6 +232,6 @@ fn get_value_from_root(root_value: &String) -> f32 {
         2f32.powf(t)
     } else {
         let t = t_str.parse::<f32>().unwrap();
-        2f32.powf(t)
+        t
     }
 }
