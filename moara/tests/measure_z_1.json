@@ -1,0 +1,23 @@
+{
+  "steps": [
+    {
+      "index": 0,
+      "gates": [
+        {
+          "name": "pauli-x",
+          "target": 0
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "gates": [
+        {
+          "name": "measure-z",
+          "target": 0,
+          "bit": 0
+        }
+      ]
+    }
+  ]
+}

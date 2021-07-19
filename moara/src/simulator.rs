@@ -1,6 +1,7 @@
-use  std::cmp::max;
-use  std::cmp::min;
+use std::cmp::max;
+use std::cmp::min;
 use std::collections::HashSet;
+use std::collections::HashMap;
 use num_complex::Complex32;
 use rand::Rng;
 use rand::prelude::ThreadRng;
@@ -41,12 +42,28 @@ pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec
 }
 
 pub fn get_probabilities(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<f32> {
-    let statevector = get_statevector(serialized_circuit, qubit_count);
+    let circuit: Circuit = serde_json::from_str(&serialized_circuit).unwrap();
+
+    let count = match qubit_count {
+        Some(working_qubit_count) => working_qubit_count,
+        None => get_qubit_count_from_circuit(&circuit)
+    };
+
+    if count == 0 {
+        return vec![];
+    }
+
+    let (statevector, measurements) = get_final_statevector(count, circuit);
+    
     let len = statevector.len();
-    let mut probabilities = vec![0f32; len];
+    let probabilities_len = if measurements.is_empty() { len } 
+                            else { get_bit_count_from_measurements(&measurements) };
+
+    let mut probabilities = vec![0f32; probabilities_len];
 
     for i in 0..len {
-        probabilities[i] = statevector[i].norm_sqr();
+        let bit_position = get_bit_position_from_measurements(&measurements, count, i);
+        probabilities[bit_position] += statevector[i].norm_sqr();
     }
 
     probabilities
@@ -68,8 +85,8 @@ fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32> {
     samples
 }
 
-fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Vec<bool>) {
-    let mut measurements = vec![false; qubit_count as usize];
+fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, HashMap<u8,u8>) {
+    let mut measurements = HashMap::new();
 
     let mut ordered_steps = circuit.steps;
     ordered_steps.sort_by(|a, b| a.index.cmp(&b.index));
@@ -82,7 +99,9 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
         let mut afected_qubits = HashSet::new();
         
         for gate in step.gates {
-
+            if measurements.contains_key(&gate.target) {
+                panic!("The qubit {} has been measured. Cannot add gates at step {} after measurement", gate.target, step.index);
+            }
             if afected_qubits.contains(&gate.target) {
                 panic!("The qubit {} is mentioned twice in step {}", gate.target, step.index);
             }
@@ -135,11 +154,18 @@ fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, Ve
                             }
                         },
                         None => {
-                            if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
-                                measurements[gate.target as usize] = true;
-                                continue;
-                            }
                             let target = gate.target;
+                            if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
+                                let bit = match gate.bit { Some(bit) => bit, None => target };
+                                if bit >= qubit_count {
+                                    panic!("Measurement bit cannot be larger than the qubit count - 1 ({}). Received {} for qubit {}", qubit_count-1, bit, target);
+                                }
+                                measurements.insert(target, bit);
+
+                                if gate.name == MEASUREMENT_Z {
+                                    continue;
+                                }
+                            }
                             let single_qubit_operator = gate_mapper::get_single_qubit_operator(gate);
                             apply_single_qubit_operator(single_qubit_operator, &mut statevector, target, qubit_count);
                         }
@@ -335,7 +361,7 @@ fn sample(statevector:&Vec<Complex32>, rng: &mut ThreadRng, len:usize) -> usize 
     panic!("Sample was not in the expected interval");
 }
 
-pub fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
+fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
     let mut qubit_count = 0;
 
     for step in &circuit.steps {
@@ -362,6 +388,36 @@ pub fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
     }
 
     qubit_count
+}
+
+fn get_bit_count_from_measurements(measurements:&HashMap<u8,u8>) -> usize {
+    let mut max = 0u8;
+    for (_, bit) in measurements {
+        if bit > &max {
+            max = *bit;
+        }
+    }
+    2 << max
+}
+
+fn get_bit_position_from_measurements(measurements:&HashMap<u8,u8>, qubit_count:u8, index:usize) -> usize {
+    if measurements.is_empty() {
+        return index;
+    }
+
+    let mut bit_position = 0;
+    for (qubit, bit) in measurements {
+        let mut masked = index & (1 << (qubit_count-qubit-1));
+        let diff = (bit-qubit) as i8;
+        if diff > 0 {
+            masked = masked >> diff;
+        }
+        if diff < 0 {
+            masked = masked << -diff;
+        }
+        bit_position = bit_position ^ masked;
+    }
+    bit_position
 }
 
 #[cfg(target_pointer_width = "64")]

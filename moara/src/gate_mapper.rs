@@ -150,6 +150,12 @@ pub fn get_single_qubit_operator(gate:Gate) -> [Complex32; 4] {
             };
             gates::rz_theta(-PI/root)
         },
+        "measure-x" => {
+            gates::hadamard()
+        }
+        "measure-y" => {
+            gates::hadamard_times_s_dagger()
+        }
         nunknown_gate => panic!("Unknown operator {}", nunknown_gate)
     }
 }
@@ -165,6 +171,7 @@ pub fn get_operator_for_controlled(gate:Gate) ->  [Complex32; 4] {
         controlstate:gate.controlstate,
         control2:gate.control2,
         controlstate2:gate.controlstate2,
+        bit:gate.bit,
         phi:gate.phi,
         theta:gate.theta,
         lambda:gate.lambda,
@@ -191,6 +198,7 @@ pub fn get_operator_for_double_target_controlled(gate:Gate) ->  [Complex32; 16] 
         controlstate:gate.controlstate,
         control2:gate.control2,
         controlstate2:gate.controlstate2,
+        bit:gate.bit,
         phi:gate.phi,
         theta:gate.theta,
         lambda:gate.lambda,

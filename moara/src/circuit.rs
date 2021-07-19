@@ -50,6 +50,10 @@ pub struct Gate
 
     #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
     #[serde(default)]
+    pub bit:Option<u8>,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
     pub phi:Option<f32>,
 
     #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]

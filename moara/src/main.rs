@@ -20,7 +20,7 @@ fn main() {
         process::exit(1);
     });
 
-    let results = moara::simulate(serialized_circuit, config.shots, config.qubit_count);
+    let results = moara::get_probabilities(serialized_circuit, config.qubit_count);
     print!("{:?}", results);
 }
 

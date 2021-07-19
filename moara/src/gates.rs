@@ -79,6 +79,11 @@ pub fn rz_theta(theta:f32) -> [Complex32; 4] {
     [C!(-half_theta*i).exp(), C!(0), C!(0), C!(half_theta*i).exp()]
 }
 
+//for y measurement
+pub fn hadamard_times_s_dagger() -> [Complex32; 4] {
+    [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0,-1.0/2.0_f32.sqrt()), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0,1.0/2.0_f32.sqrt())]
+}
+
 pub fn swap() -> [Complex32; 16] {
     [C!(1), C!(0), C!(0), C!(0),
      C!(0), C!(0), C!(1), C!(0),

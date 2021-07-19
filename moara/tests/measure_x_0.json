@@ -1,0 +1,14 @@
+{
+   "steps": [
+     {
+       "index": 2,
+       "gates": [
+         {
+           "name": "measure-x",
+           "target": 0,
+           "bit": 0
+         }
+       ]
+     }
+   ]
+ }
