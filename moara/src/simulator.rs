@@ -56,13 +56,16 @@ pub fn get_probabilities(serialized_circuit:String, qubit_count:Option<u8>) -> V
     let (statevector, measurements) = get_final_statevector(count, circuit);
     
     let len = statevector.len();
-    let probabilities_len = if measurements.is_empty() { len } 
-                            else { get_bit_count_from_measurements(&measurements) };
+    let bit_count = get_bit_count_from_measurements(&measurements);
+    let probabilities_len = if measurements.is_empty() { len } else { 1 << bit_count };
 
     let mut probabilities = vec![0f32; probabilities_len];
 
+    let i8_count = count as i8;
+    let i8_bit_count = bit_count as i8;
+    let i8_measurements = convert_measurements_to_i8(measurements);
     for i in 0..len {
-        let bit_position = get_bit_position_from_measurements(&measurements, count, i);
+        let bit_position = get_bit_position_from_measurements(&i8_measurements, i8_count, i8_bit_count, i);
         probabilities[bit_position] += statevector[i].norm_sqr();
     }
 
@@ -390,25 +393,26 @@ fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
     qubit_count
 }
 
-fn get_bit_count_from_measurements(measurements:&HashMap<u8,u8>) -> usize {
-    let mut max = 0u8;
+fn get_bit_count_from_measurements(measurements:&HashMap<u8,u8>) -> u8 {
+    let mut max = 0;
     for (_, bit) in measurements {
         if bit > &max {
             max = *bit;
         }
     }
-    2 << max
+    max+1
 }
 
-fn get_bit_position_from_measurements(measurements:&HashMap<u8,u8>, qubit_count:u8, index:usize) -> usize {
+fn get_bit_position_from_measurements(measurements:&HashMap<i8,i8>, qubit_count:i8, bit_count:i8, index:usize) -> usize {
     if measurements.is_empty() {
         return index;
     }
 
+    let bit_diff = qubit_count-bit_count;
     let mut bit_position = 0;
     for (qubit, bit) in measurements {
         let mut masked = index & (1 << (qubit_count-qubit-1));
-        let diff = (bit-qubit) as i8;
+        let diff = bit-qubit+bit_diff;
         if diff > 0 {
             masked = masked >> diff;
         }
@@ -418,6 +422,14 @@ fn get_bit_position_from_measurements(measurements:&HashMap<u8,u8>, qubit_count:
         bit_position = bit_position ^ masked;
     }
     bit_position
+}
+
+fn convert_measurements_to_i8(measurements:HashMap<u8,u8>) -> HashMap<i8,i8> {
+    let mut i8_measurements = HashMap::new();
+    for (qubit, bit) in measurements {
+        i8_measurements.insert(qubit as i8, bit as i8);
+    }
+    i8_measurements
 }
 
 #[cfg(target_pointer_width = "64")]
