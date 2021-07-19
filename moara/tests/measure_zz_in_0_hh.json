@@ -1,0 +1,32 @@
+{
+  "steps": [
+    {
+      "index": 0,
+      "gates": [
+        {
+          "name": "hadamard",
+          "target": 0
+        },
+        {
+          "name": "hadamard",
+          "target": 1
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "gates": [
+        {
+          "name": "measure-z",
+          "target": 0,
+          "bit": 0
+        },
+        {
+          "name": "measure-z",
+          "target": 1,
+          "bit": 0
+        }
+      ]
+    }
+  ]
+}

@@ -58,7 +58,6 @@ pub fn get_probabilities(serialized_circuit:String, qubit_count:Option<u8>) -> V
     let len = statevector.len();
     let bit_count = get_bit_count_from_measurements(&measurements);
     let probabilities_len = if measurements.is_empty() { len } else { 1 << bit_count };
-
     let mut probabilities = vec![0f32; probabilities_len];
 
     let i8_count = count as i8;
@@ -81,9 +80,9 @@ fn run(qubit_count:u8, circuit:Circuit, shots:u32) -> Vec<u32> {
         return vec![0; 1<<qubit_count];
     }
 
-    let (final_statevector, _measurements) = get_final_statevector(qubit_count, circuit);
+    let (final_statevector, measurements) = get_final_statevector(qubit_count, circuit);
 
-    let samples = measure(final_statevector, shots);
+    let samples = measure(final_statevector, shots, measurements, qubit_count);
 
     samples
 }
@@ -331,15 +330,22 @@ fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     (index0, index1)
 }
 
-fn measure(statevector:Vec<Complex32>, shots:u32) -> Vec<u32> {
+fn measure(statevector:Vec<Complex32>, shots:u32, measurements:HashMap<u8,u8>, qubit_count:u8) -> Vec<u32> {
     let mut rng = rand::thread_rng();
+
     let len = statevector.len();
-    let mut measurement_results = vec![0u32; len];
+    let bit_count = get_bit_count_from_measurements(&measurements);
+    let results_len = if measurements.is_empty() { len } else { 1 << bit_count };
+    let mut measurement_results = vec![0u32; results_len];
     
+    let i8_count = qubit_count as i8;
+    let i8_bit_count = bit_count as i8;
+    let i8_measurements = convert_measurements_to_i8(measurements);
     let mut i = 0;
     while i < shots {
         let sample = sample(&statevector, &mut rng, len);
-        measurement_results[sample] += 1;
+        let bit_position = get_bit_position_from_measurements(&i8_measurements, i8_count, i8_bit_count, sample);
+        measurement_results[bit_position] += 1;
         i += 1;
     }
 
