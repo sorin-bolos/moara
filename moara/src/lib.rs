@@ -5,6 +5,8 @@ pub mod gates;
 pub mod gate_mapper;
 pub mod circuit;
 pub mod simulator;
+pub mod engine;
+pub mod measurement;
 
 use num_complex::Complex32;
 
