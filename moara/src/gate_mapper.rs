@@ -155,7 +155,7 @@ pub fn get_single_qubit_operator(gate:Gate) -> [Complex32; 4] {
         "measure-y" => {
             gates::hadamard_times_s_dagger()
         }
-        nunknown_gate => panic!("Unknown operator {}", nunknown_gate)
+        unknown_gate => panic!("Unknown operator {}", unknown_gate)
     }
 }
 

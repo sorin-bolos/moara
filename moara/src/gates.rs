@@ -70,16 +70,16 @@ pub fn rx_theta(theta:f32) -> [Complex32; 4] {
 pub fn pauli_x_root(root:f32) -> [Complex32; 4] {
     let theta = PI/root;
     let half_theta = theta/2f32;
-    let a = C!((half_theta.cos()))*C!((PI/(2.0*root))*i).exp();
-    let b = C!(-1*i)*half_theta.sin()*C!((PI/(2.0*root))*i).exp();
+    let a = C!((half_theta.cos()))*C!(half_theta*i).exp();
+    let b = C!(-1*i)*half_theta.sin()*C!(half_theta*i).exp();
     [a, b, b, a]
 }
 
 pub fn pauli_x_root_dagger(root:f32) -> [Complex32; 4] {
     let theta = PI/root;
     let half_theta = theta/2f32;
-    let a = C!((half_theta.cos()))*C!((-PI/(2.0*root))*i).exp();
-    let b = C!(1*i)*half_theta.sin()*C!((-PI/(2.0*root))*i).exp();
+    let a = C!((half_theta.cos()))*C!(-half_theta*i).exp();
+    let b = C!(1*i)*half_theta.sin()*C!(-half_theta*i).exp();
     [a, b, b, a]
 }
 
@@ -93,16 +93,16 @@ pub fn ry_theta(theta:f32) -> [Complex32; 4] {
 pub fn pauli_y_root(root:f32) -> [Complex32; 4] {
     let theta = PI/root;
     let half_theta = theta/2f32;
-    let a = C!((half_theta.cos()))*C!((PI/(2.0*root))*i).exp();
-    let b = C!((half_theta.sin()))*C!((PI/(2.0*root))*i).exp();
+    let a = C!((half_theta.cos()))*C!(half_theta*i).exp();
+    let b = C!((half_theta.sin()))*C!(half_theta*i).exp();
     [a, -b, b, a]
 }
 
 pub fn pauli_y_root_dagger(root:f32) -> [Complex32; 4] {
     let theta = PI/root;
     let half_theta = theta/2f32;
-    let a = C!((half_theta.cos()))*C!((-PI/(2.0*root))*i).exp();
-    let b = C!((half_theta.sin()))*C!((-PI/(2.0*root))*i).exp();
+    let a = C!((half_theta.cos()))*C!(-half_theta*i).exp();
+    let b = C!((half_theta.sin()))*C!(-half_theta*i).exp();
     [a, -b, b, a]
 }
 
@@ -110,11 +110,6 @@ pub fn rz_theta(theta:f32) -> [Complex32; 4] {
     let half_theta = theta/2f32;
     [C!(-half_theta*i).exp(), C!(0), C!(0), C!(half_theta*i).exp()]
 }
-
-//for y measurement
-pub fn hadamard_times_s_dagger() -> [Complex32; 4] {
-    [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0,-1.0/2.0_f32.sqrt()), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0,1.0/2.0_f32.sqrt())]
-    }
     
 pub fn pauli_z_root(root:f32) -> [Complex32; 4] {
     let theta = PI/root;
@@ -125,6 +120,11 @@ pub fn pauli_z_root_dagger(root:f32) -> [Complex32; 4] {
     let theta = PI/root;
     [C!(1), C!(0), C!(0), C!(-theta*i).exp()]
 }
+
+//for y measurement
+pub fn hadamard_times_s_dagger() -> [Complex32; 4] {
+    [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0,-1.0/2.0_f32.sqrt()), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0,1.0/2.0_f32.sqrt())]
+    }
 
 pub fn swap() -> [Complex32; 16] {
     [C!(1), C!(0), C!(0), C!(0),
