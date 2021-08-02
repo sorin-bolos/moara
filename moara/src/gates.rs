@@ -103,7 +103,7 @@ pub fn pauli_y_root_dagger(root:f32) -> [Complex32; 4] {
     let half_theta = theta/2f32;
     let a = C!((half_theta.cos()))*C!(-half_theta*i).exp();
     let b = C!((half_theta.sin()))*C!(-half_theta*i).exp();
-    [a, -b, b, a]
+    [a, b, -b, a]
 }
 
 pub fn rz_theta(theta:f32) -> [Complex32; 4] {
