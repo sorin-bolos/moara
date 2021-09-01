@@ -5,7 +5,6 @@ use serde::Deserialize;
 use serde_with::serde_as;
 use serde_with::DisplayFromStr;
 use serde_with::PickFirst;
-//use serde_with::Option;
 
 #[derive(Deserialize)]
 pub struct Circuit
@@ -25,6 +24,7 @@ pub struct Step
 pub struct Gate
 {
     pub name:String,
+
     #[serde_as(as = "PickFirst<(_, DisplayFromStr)>")]
     pub target:u8,
 
@@ -32,21 +32,7 @@ pub struct Gate
     #[serde(default)]
     pub target2:Option<u8>,
 
-    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
-    #[serde(default)]
-    pub control:Option<u8>,
-    
-    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
-    #[serde(default)]
-    pub controlstate:Option<u8>,
-
-    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
-    #[serde(default)]
-    pub control2:Option<u8>,
-
-    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
-    #[serde(default)]
-    pub controlstate2:Option<u8>,
+    pub controls:Vec<Control>,
 
     #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
     #[serde(default)]
@@ -69,6 +55,13 @@ pub struct Gate
     pub root:Option<String>,
 }
 
+#[derive(Deserialize)]
+pub struct Control 
+{
+    pub position:u8,
+    pub state:bool,
+}
+
 impl Gate {
     pub fn get_min_qubit_index(&self) -> u8 {
         let mut min_index = self.target;
@@ -82,13 +75,10 @@ impl Gate {
             None => {}
         }
 
-        match self.control {
-            Some(index) => {
-                if index < min_index {
-                    min_index = index;
-                }
-            },
-            None => {}
+        for control in &self.controls {
+            if control.position < min_index {
+                min_index = control.position;
+            }
         }
 
         min_index
@@ -106,13 +96,10 @@ impl Gate {
             None => {}
         }
 
-        match self.control {
-            Some(index) => {
-                if index > max_index {
-                    max_index = index;
-                }
-            },
-            None => {}
+        for control in &self.controls {
+            if control.position > max_index {
+                max_index = control.position;
+            }
         }
 
         max_index

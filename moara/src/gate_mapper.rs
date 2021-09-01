@@ -2,9 +2,15 @@ use num_complex::Complex32;
 use super::circuit::Gate;
 use super::gates;
 
-pub fn get_double_target_operator(gate:Gate) -> [Complex32; 16] {
-    let gate_name = gate.name.as_ref();
+pub fn get_double_target_operator(gate:&Gate) -> [Complex32; 16] {
+    let mut gate_name:&str =  gate.name.as_ref();
+
+    if &gate_name[..5] == "ctrl-" {
+        gate_name =  &gate_name[5..]
+    }
+
     match gate_name {
+        "fredkin" => gates::swap(),
         "swap" => gates::swap(),
         "iswap" => gates::iswap(),
         "sqrt-swap" => gates::sqrt_swap(),
@@ -40,10 +46,16 @@ pub fn get_double_target_operator(gate:Gate) -> [Complex32; 16] {
     }
 }
 
-pub fn get_single_qubit_operator(gate:Gate) -> [Complex32; 4] {
-    let gate_name = gate.name.as_ref();
+pub fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4] {
+    let mut gate_name:&str =  gate.name.as_ref();
+
+    if &gate_name[..5] == "ctrl-" {
+        gate_name =  &gate_name[5..]
+    }
+
     match gate_name {
         "identity" => gates::identity(),
+        "toffoli" => gates::pauli_x(),
         "pauli-x" => gates::pauli_x(),
         "pauli-y" => gates::pauli_y(),
         "pauli-z" => gates::pauli_z(),
@@ -156,70 +168,6 @@ pub fn get_single_qubit_operator(gate:Gate) -> [Complex32; 4] {
             gates::hadamard_times_s_dagger()
         }
         unknown_gate => panic!("Unknown operator {}", unknown_gate)
-    }
-}
-
-pub fn get_operator_for_controlled(gate:Gate) ->  [Complex32; 4] {
-    //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
-    let single_qubit_gate_name = &gate.name[5..];
-    let single_qubit_gate = Gate {
-        name:single_qubit_gate_name.to_string(),
-        target:gate.target,
-        target2:gate.target2,
-        control:gate.control,
-        controlstate:gate.controlstate,
-        control2:gate.control2,
-        controlstate2:gate.controlstate2,
-        bit:gate.bit,
-        phi:gate.phi,
-        theta:gate.theta,
-        lambda:gate.lambda,
-        root:gate.root,
-    };
-
-    get_single_qubit_operator(single_qubit_gate)
-}
-
-pub fn get_operator_for_double_target_controlled(gate:Gate) ->  [Complex32; 16] {
-        
-    match &gate.name[..] {
-        "fredkin" => { return gates::swap() },
-        _ => { }
-    }
-
-    //remove the prefix ex: "ctrl-pauli-x" -> "pauli-x"
-    let single_qubit_gate_name = &gate.name[5..];
-    let single_qubit_gate = Gate {
-        name:single_qubit_gate_name.to_string(),
-        target:gate.target,
-        target2:gate.target2,
-        control:gate.control,
-        controlstate:gate.controlstate,
-        control2:gate.control2,
-        controlstate2:gate.controlstate2,
-        bit:gate.bit,
-        phi:gate.phi,
-        theta:gate.theta,
-        lambda:gate.lambda,
-        root:gate.root,
-    };
-
-    get_double_target_operator(single_qubit_gate)
-}
-
-pub fn get_toffoli_operator(control2:u8, target:u8, control_on_zero2:bool) -> [Complex32; 16] {
-    if control_on_zero2 {
-        if control2 > target {
-            gates::c0x1_0()
-        } else { 
-            gates::c1x0_0()
-        }
-    } else {
-        if control2 > target {
-            gates::c0x1_1()
-        } else { 
-            gates::c1x0_1()
-        }
     }
 }
 

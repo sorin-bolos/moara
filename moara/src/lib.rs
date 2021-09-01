@@ -1,6 +1,5 @@
 #[macro_use]
 pub mod complex;
-pub mod tools;
 pub mod gates;
 pub mod gate_mapper;
 pub mod circuit;
