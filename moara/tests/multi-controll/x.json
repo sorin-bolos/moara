@@ -1,0 +1,22 @@
+{
+    "steps": [
+        {
+            "index": 0,
+            "gates": [
+                {
+                    "name": "ctrl-pauli-x",
+                    "target": 0
+                }
+            ]
+        },
+        {
+            "index": 1,
+            "gates": [
+                {
+                    "name": "ctrl-pauli-x",
+                    "target": 0
+                }
+            ]
+        }
+    ]
+}

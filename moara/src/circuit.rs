@@ -9,13 +9,17 @@ use serde_with::PickFirst;
 #[derive(Deserialize)]
 pub struct Circuit
 {
+    #[serde(default)]
     pub steps:Vec<Step>
 }
 
 #[derive(Deserialize)]
 pub struct Step
 {
+    #[serde(default)]
     pub index:u16,
+    
+    #[serde(default)]
     pub gates:Vec<Gate>
 }
 
@@ -32,6 +36,7 @@ pub struct Gate
     #[serde(default)]
     pub target2:Option<u8>,
 
+    #[serde(default)]
     pub controls:Vec<Control>,
 
     #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
@@ -55,6 +60,7 @@ pub struct Gate
     pub root:Option<String>,
 }
 
+#[serde_as]
 #[derive(Deserialize)]
 pub struct Control 
 {
