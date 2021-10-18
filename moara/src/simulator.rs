@@ -64,18 +64,17 @@ fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
         for gate in &step.gates {
 
             let mut mx = gate.target;
+
             match gate.target2 {
                 Some(target2) => mx = max(mx, target2),
                 None => {}
             };
-            match gate.control {
-                Some(control) => mx = max(mx, control),
-                None => {}
-            };
-            match gate.control2 {
-                Some(control2) => mx = max(mx, control2),
-                None => {}
-            };
+
+            for control in &gate.controls {
+                if control.position > mx {
+                    mx = control.position;
+                }
+            }
 
             if mx+1 > qubit_count {
                 qubit_count = mx+1;
