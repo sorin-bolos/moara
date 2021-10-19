@@ -49,7 +49,7 @@ pub fn get_double_target_operator(gate:&Gate) -> [Complex32; 16] {
 pub fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4] {
     let mut gate_name:&str =  gate.name.as_ref();
 
-    if &gate_name[..5] == "ctrl-" {
+    if gate_name.len() > 5 && &gate_name[..5] == "ctrl-" {
         gate_name =  &gate_name[5..]
     }
 
