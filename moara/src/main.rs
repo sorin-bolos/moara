@@ -50,7 +50,7 @@ fn read_file(circuit_filename:PathBuf) -> Result<String, Box<dyn Error>>
 }
 
 #[derive(StructOpt)]
-#[structopt(about = "Moara quatnum simultor")]
+#[structopt(about = "Moara quantum simulator")]
 struct Config {
     #[structopt(flatten)]
     command:Command,
