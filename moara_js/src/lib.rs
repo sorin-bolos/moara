@@ -1,3 +1,4 @@
+use js_sys::Array;
 use wasm_bindgen::prelude::*;
 use moara;
 
@@ -9,4 +10,9 @@ pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) ->
 #[wasm_bindgen]
 pub fn get_probabilities(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<f32> {
     moara::get_probabilities(serialized_circuit, qubit_count)
+}
+
+#[wasm_bindgen]
+pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Array {
+    moara::get_statevector(serialized_circuit, qubit_count).into_iter().map(|i| JsValue::from_str(&i.to_string())).collect()
 }
