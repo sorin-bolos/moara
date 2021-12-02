@@ -25,15 +25,16 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
         let mut afected_qubits = HashSet::new();
         
         for gate in step.gates {
-            if measurements.contains_key(&gate.target) {
-                panic!("The qubit {} has been measured. Cannot add gates at step {} after measurement", gate.target, step.index);
-            }
+            for target in &gate.targets {
+                if measurements.contains_key(target) {
+                    panic!("The qubit {} has been measured. Cannot add gates at step {} after measurement", target, step.index);
+                }
 
-            let target = gate.target;
-            if afected_qubits.contains(&target) {
-                panic!("The qubit {} is mentioned twice in step {}", gate.target, step.index);
+                if afected_qubits.contains(target) {
+                    panic!("The qubit {} is mentioned twice in step {}", target, step.index);
+                }
+                afected_qubits.insert(*target);
             }
-            afected_qubits.insert(target);
             
             for control in &gate.controls {
                 if afected_qubits.contains(&control.position) {
@@ -42,26 +43,32 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
                 afected_qubits.insert(control.position);
             }
 
-            match gate.target2 {
-                Some(target2) => {
-                        let multi_target_operator = gate_mapper::get_double_target_operator(&gate);
-                        apply_double_target_operator(multi_target_operator, &mut statevector, target, target2, qubit_count, gate.controls);
-                }
-                None => {
-                    if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
-                        let bit = match gate.bit { Some(bit) => bit, None => target };
-                        if bit >= qubit_count {
-                            panic!("Measurement bit cannot be larger than the qubit count - 1 ({}). Received {} for qubit {}", qubit_count-1, bit, target);
-                        }
-                        measurements.insert(target, bit);
-                        if gate.name == MEASUREMENT_Z {
-                            continue;
-                        }
-                    }
+            if gate.targets.len() == 0 {
+                panic!("No target provided for gate {} at step {}", gate.name, step.index);
+            }
 
-                    let single_qubit_operator = gate_mapper::get_single_qubit_operator(&gate);
-                    apply_operator(single_qubit_operator, &mut statevector, target, qubit_count, gate.controls);
+            if gate.targets.len() > 2 {
+                panic!("Too many targets for gate {} at step {}", gate.name, step.index);
+            }
+
+            if gate.targets.len() == 2 {
+                let multi_target_operator = gate_mapper::get_double_target_operator(&gate);
+                apply_double_target_operator(multi_target_operator, &mut statevector, gate.targets[0], gate.targets[1], qubit_count, gate.controls);
+            } else {
+                let target = gate.targets[0];
+                if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
+                    let bit = match gate.bit { Some(bit) => bit, None => target };
+                    if bit >= qubit_count {
+                        panic!("Measurement bit cannot be larger than the qubit count - 1 ({}). Received {} for qubit {}", qubit_count-1, bit, target);
+                    }
+                    measurements.insert(target, bit);
+                    if gate.name == MEASUREMENT_Z {
+                        continue;
+                    }
                 }
+
+                let single_qubit_operator = gate_mapper::get_single_qubit_operator(&gate);
+                apply_operator(single_qubit_operator, &mut statevector, target, qubit_count, gate.controls);
             }
         }
     }
