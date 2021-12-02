@@ -37,10 +37,10 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
             }
             
             for control in &gate.controls {
-                if afected_qubits.contains(&control.position) {
-                    panic!("The qubit {} is mentioned twice in step {}", control.position, step.index);
+                if afected_qubits.contains(&control.target) {
+                    panic!("The qubit {} is mentioned twice in step {}", control.target, step.index);
                 }
-                afected_qubits.insert(control.position);
+                afected_qubits.insert(control.target);
             }
 
             if gate.targets.len() == 0 {
@@ -85,7 +85,7 @@ fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, tar
 
         let mut affected = i;
         for control in &controls {
-            let control_positon = if control.position < target { control.position } else { control.position-1 };
+            let control_positon = if control.target < target { control.target } else { control.target-1 };
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
             affected = if control.state { affected1 } else { affected0 };
 
@@ -116,9 +116,9 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
 
         let mut affected = i;
         for control in &controls {
-            let control_positon = if control.position < target1 && control.position < target2 { control.position } 
-                          else { if (control.position < target1 && control.position > target2) || (control.position > target1 && control.position < target2)  { control.position-1 }
-                          else { control.position-2 } };
+            let control_positon = if control.target < target1 && control.target < target2 { control.target } 
+                          else { if (control.target < target1 && control.target > target2) || (control.target > target1 && control.target < target2)  { control.target-1 }
+                          else { control.target-2 } };
 
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
             affected = if control.state { affected1 } else { affected0 };

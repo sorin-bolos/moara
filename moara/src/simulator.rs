@@ -1,4 +1,3 @@
-use std::cmp::max;
 use num_complex::Complex32;
 use super::circuit::Circuit;
 use super::engine;

@@ -60,7 +60,7 @@ pub struct Gate
 #[derive(Deserialize)]
 pub struct Control 
 {
-    pub position:u8,
+    pub target:u8,
     pub state:bool,
 }
 
@@ -75,8 +75,8 @@ impl Gate {
         }
 
         for control in &self.controls {
-            if control.position < min_index {
-                min_index = control.position;
+            if control.target < min_index {
+                min_index = control.target;
             }
         }
 
@@ -93,8 +93,8 @@ impl Gate {
         }
 
         for control in &self.controls {
-            if control.position > max_index {
-                max_index = control.position;
+            if control.target > max_index {
+                max_index = control.target;
             }
         }
 
