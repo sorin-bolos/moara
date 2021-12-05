@@ -11,6 +11,8 @@ const MEASUREMENT_X: &str = "measure-x";
 const MEASUREMENT_Y: &str = "measure-y";
 const MEASUREMENT_Z: &str = "measure-z";
 
+const KNOWN_CONTROL_STATES: [&str; 2] = ["0", "1"];
+
 pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, HashMap<u8,u8>) {
     let mut measurements = HashMap::new();
 
@@ -41,6 +43,10 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
                     panic!("The qubit {} is mentioned twice in step {}", control.target, step.index);
                 }
                 afected_qubits.insert(control.target);
+
+                if !KNOWN_CONTROL_STATES.contains(&&*control.state) {
+                    panic!("Unknown state {} step {}", control.state, step.index);
+                }
             }
 
             if gate.targets.len() == 0 {
@@ -80,14 +86,14 @@ fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, tar
     let controls_count = controls.len() as u8;
     let n = 1 << (qubit_count - controls_count - 1);
 
-    let mut n_size = qubit_count - controls_count;
     for i in 0..n {
+        let mut n_size = qubit_count - controls_count;
 
         let mut affected = i;
         for control in &controls {
             let control_positon = if control.target < target { control.target } else { control.target-1 };
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
-            affected = if control.state { affected1 } else { affected0 };
+            affected = if control.state == "1" { affected1 } else { affected0 };
 
             n_size += 1;
         }
@@ -110,9 +116,8 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
     let controls_count = controls.len() as u8;
     let n = 1 << (qubit_count - controls_count - 2);
 
-    
-    let mut n_size = qubit_count - controls_count;
     for i in 0..n {
+        let mut n_size = qubit_count - controls_count-1;
 
         let mut affected = i;
         for control in &controls {
@@ -121,7 +126,7 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
                           else { control.target-2 } };
 
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
-            affected = if control.state { affected1 } else { affected0 };
+            affected = if control.state == "1" { affected1 } else { affected0 };
 
             n_size += 1;
         }

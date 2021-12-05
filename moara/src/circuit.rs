@@ -61,7 +61,7 @@ pub struct Gate
 pub struct Control 
 {
     pub target:u8,
-    pub state:bool,
+    pub state:String,
 }
 
 impl Gate {
