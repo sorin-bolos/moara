@@ -55,7 +55,7 @@
         "index": 7,
         "gates": [
            {
-              "name": "swap-phi",
+              "name": "swap-theta",
               "target": 0,
               "target2": 2,
               "phi": 1

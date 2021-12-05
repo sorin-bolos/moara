@@ -15,12 +15,12 @@ pub fn get_double_target_operator(gate:&Gate) -> [Complex32; 16] {
         "swap" => gates::swap(),
         "iswap" => gates::iswap(),
         "sqrt-swap" => gates::sqrt_swap(),
-        "swap-phi" => {
-            let phi = match gate.phi{
-                Some(phi_value) => phi_value,
-                None => panic!("swap-phi for qubits {:?} has no value for phi", gate.targets)
+        "swap-theta" => {
+            let theta = match gate.theta{
+                Some(theta_value) => theta_value,
+                None => panic!("swap-theta for qubits {:?} has no value for theta", gate.targets)
             };
-            gates::swap_with_add_phase(phi)
+            gates::swap_with_add_phase(theta)
         },
         "xx" => {
             let theta = match gate.theta{
