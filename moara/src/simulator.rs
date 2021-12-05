@@ -1,4 +1,3 @@
-use std::cmp::max;
 use num_complex::Complex32;
 use super::circuit::Circuit;
 use super::engine;
@@ -63,18 +62,7 @@ fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {
     for step in &circuit.steps {
         for gate in &step.gates {
 
-            let mut mx = gate.target;
-
-            match gate.target2 {
-                Some(target2) => mx = max(mx, target2),
-                None => {}
-            };
-
-            for control in &gate.controls {
-                if control.position > mx {
-                    mx = control.position;
-                }
-            }
+            let mx = gate.get_max_qubit_index();
 
             if mx+1 > qubit_count {
                 qubit_count = mx+1;

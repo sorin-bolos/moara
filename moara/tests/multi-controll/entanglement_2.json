@@ -12,12 +12,12 @@
                     "target": 2,
                     "controls": [
                         {
-                            "position": 0,
-                            "state": true
+                            "target": 0,
+                            "state": "1"
                         },
                         {
-                            "position": 1,
-                            "state": false
+                            "target": 1,
+                            "state": "1"
                         }
                     ]
                 }

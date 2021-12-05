@@ -11,6 +11,8 @@ const MEASUREMENT_X: &str = "measure-x";
 const MEASUREMENT_Y: &str = "measure-y";
 const MEASUREMENT_Z: &str = "measure-z";
 
+const KNOWN_CONTROL_STATES: [&str; 2] = ["0", "1"];
+
 pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, HashMap<u8,u8>) {
     let mut measurements = HashMap::new();
 
@@ -25,43 +27,54 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
         let mut afected_qubits = HashSet::new();
         
         for gate in step.gates {
-            if measurements.contains_key(&gate.target) {
-                panic!("The qubit {} has been measured. Cannot add gates at step {} after measurement", gate.target, step.index);
-            }
+            for target in &gate.targets {
+                if measurements.contains_key(target) {
+                    panic!("The qubit {} has been measured. Cannot add gates at step {} after measurement", target, step.index);
+                }
 
-            let target = gate.target;
-            if afected_qubits.contains(&target) {
-                panic!("The qubit {} is mentioned twice in step {}", gate.target, step.index);
+                if afected_qubits.contains(target) {
+                    panic!("The qubit {} is mentioned twice in step {}", target, step.index);
+                }
+                afected_qubits.insert(*target);
             }
-            afected_qubits.insert(target);
             
             for control in &gate.controls {
-                if afected_qubits.contains(&control.position) {
-                    panic!("The qubit {} is mentioned twice in step {}", control.position, step.index);
+                if afected_qubits.contains(&control.target) {
+                    panic!("The qubit {} is mentioned twice in step {}", control.target, step.index);
                 }
-                afected_qubits.insert(control.position);
+                afected_qubits.insert(control.target);
+
+                if !KNOWN_CONTROL_STATES.contains(&&*control.state) {
+                    panic!("Unknown state {} step {}", control.state, step.index);
+                }
             }
 
-            match gate.target2 {
-                Some(target2) => {
-                        let multi_target_operator = gate_mapper::get_double_target_operator(&gate);
-                        apply_double_target_operator(multi_target_operator, &mut statevector, target, target2, qubit_count, gate.controls);
-                }
-                None => {
-                    if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
-                        let bit = match gate.bit { Some(bit) => bit, None => target };
-                        if bit >= qubit_count {
-                            panic!("Measurement bit cannot be larger than the qubit count - 1 ({}). Received {} for qubit {}", qubit_count-1, bit, target);
-                        }
-                        measurements.insert(target, bit);
-                        if gate.name == MEASUREMENT_Z {
-                            continue;
-                        }
-                    }
+            if gate.targets.len() == 0 {
+                panic!("No target provided for gate {} at step {}", gate.name, step.index);
+            }
 
-                    let single_qubit_operator = gate_mapper::get_single_qubit_operator(&gate);
-                    apply_operator(single_qubit_operator, &mut statevector, target, qubit_count, gate.controls);
+            if gate.targets.len() > 2 {
+                panic!("Too many targets for gate {} at step {}", gate.name, step.index);
+            }
+
+            if gate.targets.len() == 2 {
+                let multi_target_operator = gate_mapper::get_double_target_operator(&gate);
+                apply_double_target_operator(multi_target_operator, &mut statevector, gate.targets[0], gate.targets[1], qubit_count, gate.controls);
+            } else {
+                let target = gate.targets[0];
+                if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
+                    let bit = match gate.bit { Some(bit) => bit, None => target };
+                    if bit >= qubit_count {
+                        panic!("Measurement bit cannot be larger than the qubit count - 1 ({}). Received {} for qubit {}", qubit_count-1, bit, target);
+                    }
+                    measurements.insert(target, bit);
+                    if gate.name == MEASUREMENT_Z {
+                        continue;
+                    }
                 }
+
+                let single_qubit_operator = gate_mapper::get_single_qubit_operator(&gate);
+                apply_operator(single_qubit_operator, &mut statevector, target, qubit_count, gate.controls);
             }
         }
     }
@@ -73,14 +86,14 @@ fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, tar
     let controls_count = controls.len() as u8;
     let n = 1 << (qubit_count - controls_count - 1);
 
-    let mut n_size = qubit_count - controls_count;
     for i in 0..n {
+        let mut n_size = qubit_count - controls_count;
 
         let mut affected = i;
         for control in &controls {
-            let control_positon = if control.position < target { control.position } else { control.position-1 };
+            let control_positon = if control.target < target { control.target } else { control.target-1 };
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
-            affected = if control.state { affected1 } else { affected0 };
+            affected = if control.state == "1" { affected1 } else { affected0 };
 
             n_size += 1;
         }
@@ -103,18 +116,17 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
     let controls_count = controls.len() as u8;
     let n = 1 << (qubit_count - controls_count - 2);
 
-    
-    let mut n_size = qubit_count - controls_count;
     for i in 0..n {
+        let mut n_size = qubit_count - controls_count-1;
 
         let mut affected = i;
         for control in &controls {
-            let control_positon = if control.position < target1 && control.position < target2 { control.position } 
-                          else { if (control.position < target1 && control.position > target2) || (control.position > target1 && control.position < target2)  { control.position-1 }
-                          else { control.position-2 } };
+            let control_positon = if control.target < target1 && control.target < target2 { control.target } 
+                          else { if (control.target < target1 && control.target > target2) || (control.target > target1 && control.target < target2)  { control.target-1 }
+                          else { control.target-2 } };
 
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
-            affected = if control.state { affected1 } else { affected0 };
+            affected = if control.state == "1" { affected1 } else { affected0 };
 
             n_size += 1;
         }

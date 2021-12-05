@@ -29,12 +29,8 @@ pub struct Gate
 {
     pub name:String,
 
-    #[serde_as(as = "PickFirst<(_, DisplayFromStr)>")]
-    pub target:u8,
-
-    #[serde_as(as = "PickFirst<(_, Option<DisplayFromStr>)>")]
     #[serde(default)]
-    pub target2:Option<u8>,
+    pub targets:Vec<u8>,
 
     #[serde(default)]
     pub controls:Vec<Control>,
@@ -64,26 +60,23 @@ pub struct Gate
 #[derive(Deserialize)]
 pub struct Control 
 {
-    pub position:u8,
-    pub state:bool,
+    pub target:u8,
+    pub state:String,
 }
 
 impl Gate {
     pub fn get_min_qubit_index(&self) -> u8 {
-        let mut min_index = self.target;
+        let mut min_index = self.targets[0];
 
-        match self.target2 {
-            Some(index) => {
-                if index < min_index {
-                    min_index = index;
-                }
-            },
-            None => {}
+        for i in 1..self.targets.len() {
+            if self.targets[i] < min_index {
+                min_index = self.targets[i];
+            }
         }
 
         for control in &self.controls {
-            if control.position < min_index {
-                min_index = control.position;
+            if control.target < min_index {
+                min_index = control.target;
             }
         }
 
@@ -91,20 +84,17 @@ impl Gate {
     }
 
     pub fn get_max_qubit_index(&self) -> u8 {
-        let mut max_index = self.target;
+        let mut max_index = self.targets[0];
 
-        match self.target2 {
-            Some(index) => {
-                if index > max_index {
-                    max_index = index;
-                }
-            },
-            None => {}
+        for i in 1..self.targets.len() {
+            if self.targets[i] > max_index {
+                max_index = self.targets[i];
+            }
         }
 
         for control in &self.controls {
-            if control.position > max_index {
-                max_index = control.position;
+            if control.target > max_index {
+                max_index = control.target;
             }
         }
 
