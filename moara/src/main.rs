@@ -1,10 +1,11 @@
 use num_complex::Complex32;
-use std::io::Write;
+use std::io::{BufWriter, Write};
 use std::fs::File;
 use std::process;
 use std::fs;
 use std::error::Error;
 use std::path::PathBuf;
+use std::result::Result;
 use structopt::StructOpt;
 
 use moara;
@@ -20,9 +21,7 @@ fn main() {
             });
 
             let results = moara::simulate(serialized_circuit, shots, qubit_count);
-            
-            let results_str = format!("{:?}",results);
-            output_results(results_str, output);
+            output_u32(results, output);
         },
         Command::Probabilities { circuit_filename, qubit_count, output } => {
             let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
@@ -31,8 +30,7 @@ fn main() {
             });
 
             let results = moara::get_probabilities(serialized_circuit, qubit_count);
-            let results_str = format_f32(results);
-            output_results(results_str, output);
+            output_f32(results, output);
         },
         Command::Statevector { circuit_filename, qubit_count, output } => {
             let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
@@ -41,8 +39,7 @@ fn main() {
             });
 
             let results = moara::get_statevector(serialized_circuit, qubit_count);
-            let results_str = format_complex32(results);
-            output_results(results_str, output);
+            output_complex32(results, output);
         },
     }
 
@@ -55,69 +52,118 @@ fn read_file(circuit_filename:PathBuf) -> Result<String, Box<dyn Error>> {
     Ok(contents)
 }
 
-fn output_results(results_str:String, output:Option<PathBuf>) {
+fn output_u32(results:Vec<u32>, output:Option<PathBuf>) {
     match output {
         Some(filename) => {
-            let mut f = File::create(filename).unwrap_or_else(|err| {
+            let f = File::create(filename).unwrap_or_else(|err| {
                 println!("{}", err);
                 process::exit(1);
             });
-            f.write_all(results_str.as_bytes()).unwrap_or_else(|err| {
-                println!("{}", err);
-                process::exit(1);
-            });
+            let mut writer = BufWriter::new(f);
+            write_u32(results, &mut writer);
         },
         None => {
-            print!("{}", results_str);
+            let mut writer = std::io::stdout();
+            write_u32(results, &mut writer);
         }
     }
 }
 
-fn format_f32(results:Vec<f32>) -> String {
-    let mut result = String::new();
-    result.push_str("[");
+fn output_f32(results:Vec<f32>, output:Option<PathBuf>) {
+    match output {
+        Some(filename) => {
+            let f = File::create(filename).unwrap_or_else(|err| {
+                println!("{}", err);
+                process::exit(1);
+            });
+            let mut writer = BufWriter::new(f);
+            write_f32(results, &mut writer);
+        },
+        None => {
+            let mut writer = std::io::stdout();
+            write_f32(results, &mut writer);
+        }
+    }
+}
+
+fn output_complex32(results:Vec<Complex32>, output:Option<PathBuf>) {
+    match output {
+        Some(filename) => {
+            let f = File::create(filename).unwrap_or_else(|err| {
+                println!("{}", err);
+                process::exit(1);
+            });
+            let mut writer = BufWriter::new(f);
+            write_complex32(results, &mut writer);
+        },
+        None => {
+            let mut writer = std::io::stdout();
+            write_complex32(results, &mut writer);
+        }
+    }
+}
+
+fn write_u32(results:Vec<u32>, writer:&mut dyn Write) {
+    writer.write("[".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    for r in &results[0..results.len() - 1] {
+        if *r == 0 || *r == 1 {
+            writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+        } else {
+            writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+        }
+        writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    }
+    let r = &results[results.len()-1];
+    if *r == 0 || *r == 1 {
+        writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    } else {
+        writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    }
+    writer.write("]".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    writer.flush().unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+}
+
+fn write_f32(results:Vec<f32>, writer:&mut dyn Write) {
+    writer.write("[".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     for r in &results[0..results.len() - 1] {
         if *r == 0.0 || *r == 1.0 {
-            result.push_str(&r.to_string());
+            writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
         } else {
-            result.push_str(&format!("{:e}", r));
+            writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
         }
-        result.push_str(", ");
+        writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     }
     let r = &results[results.len()-1];
     if *r == 0.0 || *r == 1.0 {
-        result.push_str(&r.to_string());
+        writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     } else {
-        result.push_str(&format!("{:e}", r));
+        writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     }
-    result.push_str("]");
-    
-    return result;
+    writer.write("]".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    writer.flush().unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
 }
 
-fn format_complex32(results:Vec<Complex32>) -> String {
-    let mut result = String::new();
+fn write_complex32(results:Vec<Complex32>, writer:&mut dyn Write) {
     let zero = Complex32::new(0.0,0.0);
     let one = Complex32::new(1.0,0.0);
 
-    result.push_str("[");
+    writer.write("[".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     for r in &results[0..results.len() - 1] {
         if *r == zero || *r == one {
-            result.push_str(&r.to_string());
+            writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
         } else {
-            result.push_str(&format!("{:e}", r));
+            writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
         }
-        result.push_str(", ");
+        writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     }
     let r = &results[results.len()-1];
     if *r == zero || *r == one {
-        result.push_str(&r.to_string());
+        writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     } else {
-        result.push_str(&format!("{:e}", r));
+        writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     }
-    result.push_str("]");
-
-    return result;
+    writer.write("]".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    writer.flush().unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
 }
 
 #[derive(StructOpt)]
