@@ -52,6 +52,7 @@ fn read_file(circuit_filename:PathBuf) -> Result<String, Box<dyn Error>> {
     Ok(contents)
 }
 
+
 fn output_u32(results:Vec<u32>, output:Option<PathBuf>) {
     match output {
         Some(filename) => {
@@ -69,16 +70,39 @@ fn output_u32(results:Vec<u32>, output:Option<PathBuf>) {
     }
 }
 
+fn add_extension(path: &mut std::path::PathBuf, extension: impl AsRef<std::path::Path>) {
+  match path.extension() {
+      Some(ext) => {
+          let mut ext = ext.to_os_string();
+          ext.push(".");
+          ext.push(extension.as_ref());
+          path.set_extension(ext)
+      }
+      None => path.set_extension(extension.as_ref()),
+  };
+}
+
 fn output_f32(results:Vec<f32>, output:Option<PathBuf>) {
     match output {
         Some(filename) => {
+            let mut control_file = filename.clone();
+            // writing simulation results
             let f = File::create(filename).unwrap_or_else(|err| {
                 println!("{}", err);
                 process::exit(1);
             });
             let mut writer = BufWriter::new(f);
             write_f32(results, &mut writer);
-            print!("done");
+            // writing control file          
+            add_extension(&mut control_file, "ctrl");
+            let mut file = File::create(control_file).unwrap_or_else(|err| {
+              println!("{}", err);
+              process::exit(1);
+            }); 
+            if let Err(e) = file.write_all(b"done") {
+              println!("Writing error: {}", e.to_string());
+              process::exit(1);
+            }
         },
         None => {
             let mut writer = std::io::stdout();
