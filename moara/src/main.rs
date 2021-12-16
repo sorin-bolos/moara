@@ -78,6 +78,7 @@ fn output_f32(results:Vec<f32>, output:Option<PathBuf>) {
             });
             let mut writer = BufWriter::new(f);
             write_f32(results, &mut writer);
+            print!("done");
         },
         None => {
             let mut writer = std::io::stdout();
