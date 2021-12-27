@@ -3,24 +3,73 @@ use super::circuit::Gate;
 use super::gates;
 
 pub fn get_double_target_operator(gate:&Gate) -> [Complex32; 16] {
-    let mut gate_name:&str =  gate.name.as_ref();
-
-   
-    if  gate_name.len() > 5 && &gate_name[..5] == "ctrl-" {
-        gate_name =  &gate_name[5..]
-    }
+    let gate_name:&str =  gate.name.as_ref();
 
     match gate_name {
-        "fredkin" => gates::swap(),
         "swap" => gates::swap(),
         "iswap" => gates::iswap(),
+        "fswap" => gates::fswap(),
         "sqrt-swap" => gates::sqrt_swap(),
+        "sqrt-swap-dagger" => gates::sqrt_swap_dagger(),
+        "berkeley" => gates::berkeley(),
+        "berkeley-dagger" => gates::berkeley_dagger(),
+        "ecp" => gates::ecp(),
+        "ecp-dagger" => gates::ecp_dagger(),
+        "magic" => gates::magic(),
+        "magic-dagger" => gates::magic_dagger(),
+        "w" => gates::w(),
+        "a" => {
+          let theta = match gate.theta{
+              Some(theta_value) => theta_value,
+              None => panic!("xy for qubit {:?} has no value for theta", gate.targets)
+          };
+          let phi = match gate.phi{
+            Some(phi_value) => phi_value,
+            None => panic!("a for qubit {:?} has no value for phi", gate.targets)
+          };
+          gates::a(theta, phi)
+        }
+        "cross-resonance" => {
+          let theta = match gate.theta{
+              Some(theta_value) => theta_value,
+              None => panic!("cross-resonance for qubits {:?} has no value for theta", gate.targets)
+          };
+          gates::cross_resonance(theta)
+        },
+        "cross-resonance-dagger" => {
+          let theta = match gate.theta{
+              Some(theta_value) => theta_value,
+              None => panic!("cross-resonance-dagger for qubits {:?} has no value for theta", gate.targets)
+          };
+          gates::cross_resonance_dagger(theta)
+        },
+        "givens" => {
+          let theta = match gate.theta{
+              Some(theta_value) => theta_value,
+              None => panic!("givens for qubits {:?} has no value for theta", gate.targets)
+          };
+          gates::givens(theta)
+        },
         "swap-theta" => {
             let theta = match gate.theta{
                 Some(theta_value) => theta_value,
                 None => panic!("swap-theta for qubits {:?} has no value for theta", gate.targets)
             };
             gates::swap_with_add_phase(theta)
+        },
+        "swap-root" => {
+            let root = match &gate.root{
+                Some(root_value) => get_value_from_root(root_value),
+                None => panic!("swap-root for qubit {:?} has no value for root", gate.targets)
+            };
+            gates::swap_root(root)
+        },
+        "swap-root-dagger" => {
+          let root = match &gate.root{
+              Some(root_value) => get_value_from_root(root_value),
+              None => panic!("swap-root-dagger for qubit {:?} has no value for root", gate.targets)
+          };
+          gates::swap_root_dagger(root)
         },
         "xx" => {
             let theta = match gate.theta{
@@ -43,29 +92,39 @@ pub fn get_double_target_operator(gate:&Gate) -> [Complex32; 16] {
             };
             gates::zz(theta)
         }
+        "xy" => {
+          let theta = match gate.theta{
+              Some(theta_value) => theta_value,
+              None => panic!("xy for qubit {:?} has no value for theta", gate.targets)
+          };
+          gates::xy(theta)
+        }
         unknown_gate => panic!("Unknown multi-taget operator {}", unknown_gate)
     }
 }
 
 pub fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4] {
-    let mut gate_name:&str =  gate.name.as_ref();
-
-    if gate_name.len() > 5 && &gate_name[..5] == "ctrl-" {
-        gate_name =  &gate_name[5..]
-    }
+    let gate_name:&str =  gate.name.as_ref();
 
     match gate_name {
         "identity" => gates::identity(),
-        "toffoli" => gates::pauli_x(),
         "pauli-x" => gates::pauli_x(),
         "pauli-y" => gates::pauli_y(),
         "pauli-z" => gates::pauli_z(),
+        "c" => gates::c(),
+        "c-dagger" => gates::c_dagger(),
         "hadamard" => gates::hadamard(),
+        "hadamard_xy" => gates::hadamard_xy(),
+        "hadamard_yz" => gates::hadamard_yz(),
+        "hadamard_zx" => gates::hadamard_zx(),
         "t" => gates::t(),
         "t-dagger" => gates::t_dagger(),
         "s" => gates::s(),
         "s-dagger" => gates::s_dagger(),
-        "sqrt-not" => gates::sqrt_not(),
+        "v" => gates::v(),
+        "v-dagger" => gates::v_dagger(),
+        "h" => gates::h(),
+        "h-dagger" => gates::h_dagger(),
         "u3" => {
             let phi = match gate.phi{
                 Some(phi_value) => phi_value,

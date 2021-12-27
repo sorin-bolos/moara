@@ -14,12 +14,47 @@ pub fn pauli_z() -> [Complex32; 4] {
     [Complex32::new(1.0,0.0),Complex32::new(0.0,0.0), Complex32::new(0.0,0.0),Complex32::new(-1.0,0.0)]
 }
 
+pub fn c() -> [Complex32; 4] {
+  [C!(1-1*i)*0.5, C!(-1-1*i)*0.5, C!(1-1*i)*0.5, C!(1+1*i)*0.5]
+}
+
+pub fn c_dagger() -> [Complex32; 4] {
+  [C!(1+1*i)*0.5, C!(1+1*i)*0.5, C!(-1+1*i)*0.5, C!(1-1*i)*0.5]
+}
+
 pub fn hadamard() -> [Complex32; 4] {
     [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0)]
 }
 
-pub fn sqrt_not() -> [Complex32; 4] {
+pub fn hadamard_xy() -> [Complex32; 4] {
+  [ C!(0), C!(1+1*i)/2.0_f32.sqrt(), C!(1-1*i)/2.0_f32.sqrt(), C!(0)]
+}
+
+
+pub fn hadamard_yz() -> [Complex32; 4] {
+  [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0,-1.0/2.0_f32.sqrt()), Complex32::new(0.0,1.0/2.0_f32.sqrt()), Complex32::new(-1.0/2.0_f32.sqrt(),0.0)]
+}
+
+
+pub fn hadamard_zx() -> [Complex32; 4] {
+  [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0)]
+}
+
+
+pub fn v() -> [Complex32; 4] {
     [C!(1+1*i)*0.5, C!(1-1*i)*0.5, C!(1-1*i)*0.5, C!(1+1*i)*0.5]
+}
+
+pub fn v_dagger() -> [Complex32; 4] {
+  [C!(1-1*i)*0.5, C!(1+1*i)*0.5, C!(1+1*i)*0.5, C!(1-1*i)*0.5]
+}
+
+pub fn h() -> [Complex32; 4] {
+  [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)]
+}
+
+pub fn h_dagger() -> [Complex32; 4] {
+  [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)]
 }
 
 pub fn t() -> [Complex32; 4] {
@@ -147,11 +182,47 @@ pub fn iswap() -> [Complex32; 16] {
      C!(0), C!(0), C!(0), C!(1)]
 }
 
+pub fn fswap() -> [Complex32; 16] {
+  [C!(1), C!(0), C!(0), C!(0),
+   C!(0), C!(0), C!(1), C!(0),
+   C!(0), C!(1), C!(0), C!(0),
+   C!(0), C!(0), C!(0), C!(-1)]
+}
+
 pub fn sqrt_swap() -> [Complex32; 16] {
     [C!(1), C!(0), C!(0), C!(0),
      C!(0), C!(1+1*i)*0.5, C!(1-1*i)*0.5, C!(0),
      C!(0), C!(1-1*i)*0.5, C!(1+1*i)*0.5, C!(0),
      C!(0), C!(0), C!(0), C!(1)]
+}
+
+pub fn sqrt_swap_dagger() -> [Complex32; 16] {
+  [C!(1), C!(0), C!(0), C!(0),
+   C!(0), C!(1-1*i)*0.5, C!(1+1*i)*0.5, C!(0),
+   C!(0), C!(1+1*i)*0.5, C!(1-1*i)*0.5, C!(0),
+   C!(0), C!(0), C!(0), C!(1)]
+}
+
+pub fn swap_root(root:f32) -> [Complex32; 16] {
+  let theta = PI/root;
+  let phase = C!(-theta*i)/4_f32.exp();
+  let half_theta = theta/2f32;
+
+  [phase * C!(theta*i)/2_f32.exp(), C!(0), C!(0), C!(0),
+   C!(0), phase * half_theta.cos(), phase * C!(1*i) * half_theta.sin(), C!(0),
+   C!(0), phase * C!(1*i) * half_theta.sin(), phase * half_theta.cos(), C!(0),
+   C!(0), C!(0), C!(0), phase * C!(theta*i)/2_f32.exp()]
+}
+
+pub fn swap_root_dagger(root:f32) -> [Complex32; 16] {
+  let theta = -PI/root;
+  let phase = C!(-theta*i)/4_f32.exp();
+  let half_theta = theta/2f32;
+
+  [phase * C!(theta*i)/2_f32.exp(), C!(0), C!(0), C!(0),
+   C!(0), phase * half_theta.cos(), phase * C!(1*i) * half_theta.sin(), C!(0),
+   C!(0), phase * C!(1*i) * half_theta.sin(), phase * half_theta.cos(), C!(0),
+   C!(0), C!(0), C!(0), phase * C!(theta*i)/2_f32.exp()]
 }
 
 pub fn xx(theta:f32) -> [Complex32; 16] {
@@ -177,39 +248,127 @@ pub fn yy(theta:f32) -> [Complex32; 16] {
 }
 
 pub fn zz(theta:f32) -> [Complex32; 16] {
-    let a = C!(-theta*i).exp();
+    let half_theta = theta/2f32;
+    let a = C!(-half_theta*i).exp();
+    let b = C!(half_theta*i).exp();
 
-    [C!(1), C!(0), C!(0), C!(0),
-     C!(0), a, C!(0), C!(0),
-     C!(0), C!(0), a, C!(0),
-     C!(0), C!(0), C!(0), C!(1)]
+    [a, C!(0), C!(0), C!(0),
+     C!(0), b, C!(0), C!(0),
+     C!(0), C!(0), b, C!(0),
+     C!(0), C!(0), C!(0), a]
 }
 
-//these gates help with the toffoli implementation
-pub fn c0x1_1() -> [Complex32; 16] {
-    [C!(1), C!(0), C!(0), C!(0),
-     C!(0), C!(1), C!(0), C!(0),
-     C!(0), C!(0), C!(0), C!(1),
-     C!(0), C!(0), C!(1), C!(0)]
+pub fn xy(theta:f32) -> [Complex32; 16] {
+  let theta_cos = theta.cos();
+  let theta_sin = theta.sin();
+
+  [C!(1), C!(0), C!(0), C!(0),
+   C!(0), C!(theta_cos), C!(-theta_sin*i), C!(0),
+   C!(0), C!(-theta_sin*i), C!(theta_cos), C!(0),
+   C!(0), C!(0), C!(0), C!(1)]
 }
 
-pub fn c1x0_1() -> [Complex32; 16] {
-    [C!(1), C!(0), C!(0), C!(0),
-     C!(0), C!(0), C!(0), C!(1),
-     C!(0), C!(0), C!(1), C!(0),
-     C!(0), C!(1), C!(0), C!(0)]
+pub fn berkeley() -> [Complex32; 16] {
+
+  let theta = PI/8_f32;
+  let theta_times3 = 3_f32 * PI/8_f32;
+
+  [C!((theta.cos())), C!(0), C!(0), C!((theta.sin())*i),
+   C!(0), C!((theta_times3.cos())), C!((theta_times3.sin())*i), C!(0),
+   C!(0), C!((theta.sin())*i), C!((theta_times3.cos())), C!(0),
+   C!((theta.sin())*i), C!(0), C!(0), C!((theta.cos()))]
 }
 
-pub fn c0x1_0() -> [Complex32; 16] {
-    [C!(0), C!(1), C!(0), C!(0),
-     C!(1), C!(0), C!(0), C!(0),
-     C!(0), C!(0), C!(1), C!(0),
-     C!(0), C!(0), C!(0), C!(1)]
+pub fn berkeley_dagger() -> [Complex32; 16] {
+
+  let theta = PI/8_f32;
+  let theta_times3 = 3_f32 * PI/8_f32;
+
+  [C!((theta.cos())), C!(0), C!(0), C!(-(theta.sin())*i),
+   C!(0), C!((theta_times3.cos())),  C!(-(theta_times3.sin())*i), C!(0),
+   C!(0),  C!(-(theta.sin())*i), C!((theta_times3.cos())), C!(0),
+   C!(-(theta.sin())*i), C!(0), C!(0), C!((theta.cos()))]
 }
 
-pub fn c1x0_0() -> [Complex32; 16] {
-    [C!(0), C!(0), C!(1), C!(0),
-     C!(0), C!(1), C!(0), C!(0),
-     C!(1), C!(0), C!(0), C!(0),
-     C!(0), C!(0), C!(0), C!(1)]
+pub fn ecp() -> [Complex32; 16] {
+
+  let c = (PI/8_f32).cos();
+  let s = (PI/8_f32).sin();
+
+  [C!((2_f32*c)), C!(0), C!(0), C!((-2_f32*s)*i),
+   C!(0), C!(1+1*i)*(c-s), C!(1-1*i)*(c+s), C!(0),
+   C!(0), C!(1-1*i)*(c+s), C!(1+1*i)*(c-s), C!(0),
+   C!((-2_f32*s)*i), C!(0), C!(0), C!((2_f32*c))]
+}
+
+pub fn ecp_dagger() -> [Complex32; 16] {
+
+  let c = (PI/8_f32).cos();
+  let s = (PI/8_f32).sin();
+
+  [C!((2_f32*c)), C!(0), C!(0), C!((2_f32*s)*i),
+   C!(0), C!(1-1*i)*(c-s), C!(1+1*i)*(c+s), C!(0),
+   C!(0), C!(1+1*i)*(c+s), C!(1-1*i)*(c-s), C!(0),
+   C!((2_f32*s)*i), C!(0), C!(0), C!((2_f32*c))]
+}
+
+pub fn w() -> [Complex32; 16] {
+  [C!(1), C!(0), C!(0), C!(0),
+   C!(0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), C!(0),
+   C!(0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), C!(0),
+   C!(0), C!(0), C!(0), C!(1)]
+}
+
+
+pub fn magic() -> [Complex32; 16] {
+  [C!(1), C!(1*i), C!(0), C!(0),
+   C!(0), C!(0), C!(1*i), C!(1),
+   C!(0), C!(0), C!(1*i), C!(-1),
+   C!(1), C!(-1*i), C!(0), C!(0)]
+}
+
+pub fn magic_dagger() -> [Complex32; 16] {
+  [C!(1), C!(0), C!(0), C!(1),
+   C!(-1*i), C!(0), C!(0), C!(1*i),
+   C!(0), C!(-1*i), C!(-1*i), C!(0),
+   C!(0), C!(1), C!(-1), C!(0)]
+}
+
+
+pub fn cross_resonance(theta:f32) -> [Complex32; 16] {
+  let half_theta = theta/2f32;
+
+  [C!((half_theta.cos())), C!((-half_theta.sin())*i), C!(0), C!(0),
+   C!((-half_theta.sin())*i), C!((half_theta.cos())), C!(0), C!(0),
+   C!(0), C!(0), C!((half_theta.cos())), C!((half_theta.sin())*i),
+   C!(0), C!(0), C!((half_theta.sin())*i), C!((half_theta.cos()))]
+}
+
+pub fn cross_resonance_dagger(theta:f32) -> [Complex32; 16] {
+  let half_theta = theta/2f32;
+
+  [C!((half_theta.cos())), C!((half_theta.sin())*i), C!(0), C!(0),
+   C!((half_theta.sin())*i), C!((half_theta.cos())), C!(0), C!(0),
+   C!(0), C!(0), C!((half_theta.cos())), C!((-half_theta.sin())*i),
+   C!(0), C!(0), C!((-half_theta.sin())*i), C!((half_theta.cos()))]
+}
+
+pub fn givens(theta:f32) -> [Complex32; 16] {
+
+  let theta_cos = theta.cos();
+  let theta_sin = theta.sin();
+
+  [C!(1), C!(0), C!(0), C!(0),
+   C!(0), C!(theta_cos), C!(-theta_sin), C!(0),
+   C!(0), C!(theta_sin), C!(theta_cos), C!(0),
+   C!(0), C!(0), C!(0), C!(1)]
+
+}
+
+pub fn a(theta:f32, phi:f32) -> [Complex32; 16] {
+
+  [C!(1), C!(0), C!(0), C!(0),
+   C!(0), C!((theta.cos())), C!((theta.sin())) * C!(phi*i).exp(), C!(0),
+   C!(0), C!((theta.sin())) * C!(-phi*i).exp(), C!((-theta.cos())), C!(0),
+   C!(0), C!(0), C!(0), C!(1)]
 }
