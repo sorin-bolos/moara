@@ -82,7 +82,7 @@ pub fn identity() -> [Complex32; 4] {
 }
 
 pub fn u3(theta:f32, phi:f32, lambda:f32) -> [Complex32; 4] {
-    let half_theta = theta/2f32;
+    let half_theta = theta/2.0_f32;
     [C!((half_theta.cos())), -1.0*C!(lambda*i).exp()*half_theta.sin(), C!(phi*i).exp()*half_theta.sin(), C!((phi+lambda)*i).exp()*half_theta.cos()]
 }
 
@@ -205,24 +205,24 @@ pub fn sqrt_swap_dagger() -> [Complex32; 16] {
 
 pub fn swap_root(root:f32) -> [Complex32; 16] {
   let theta = PI/root;
-  let phase = C!(-theta*i)/4_f32.exp();
+  let phase = (C!(-theta*i)/4_f32).exp();
   let half_theta = theta/2f32;
 
-  [phase * C!(theta*i)/2_f32.exp(), C!(0), C!(0), C!(0),
+  [phase * (C!(theta*i)/2_f32).exp(), C!(0), C!(0), C!(0),
    C!(0), phase * half_theta.cos(), phase * C!(1*i) * half_theta.sin(), C!(0),
    C!(0), phase * C!(1*i) * half_theta.sin(), phase * half_theta.cos(), C!(0),
-   C!(0), C!(0), C!(0), phase * C!(theta*i)/2_f32.exp()]
+   C!(0), C!(0), C!(0), phase * (C!(theta*i)/2_f32).exp()]
 }
 
 pub fn swap_root_dagger(root:f32) -> [Complex32; 16] {
   let theta = -PI/root;
-  let phase = C!(-theta*i)/4_f32.exp();
+  let phase = (C!(-theta*i)/4_f32).exp();
   let half_theta = theta/2f32;
 
-  [phase * C!(theta*i)/2_f32.exp(), C!(0), C!(0), C!(0),
+  [phase * (C!(theta*i)/2_f32).exp(), C!(0), C!(0), C!(0),
    C!(0), phase * half_theta.cos(), phase * C!(1*i) * half_theta.sin(), C!(0),
    C!(0), phase * C!(1*i) * half_theta.sin(), phase * half_theta.cos(), C!(0),
-   C!(0), C!(0), C!(0), phase * C!(theta*i)/2_f32.exp()]
+   C!(0), C!(0), C!(0), phase * (C!(theta*i)/2_f32).exp()]
 }
 
 pub fn xx(theta:f32) -> [Complex32; 16] {
