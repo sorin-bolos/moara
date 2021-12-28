@@ -17,6 +17,8 @@ pub fn get_double_target_operator(gate:&Gate) -> [Complex32; 16] {
         "ecp-dagger" => gates::ecp_dagger(),
         "magic" => gates::magic(),
         "magic-dagger" => gates::magic_dagger(),
+        "molmer-sorensen" => gates::molmer_sorensen(),
+        "molmer-sorensen-dagger" => gates::molmer_sorensen_dagger(),
         "w" => gates::w(),
         "a" => {
           let theta = match gate.theta{

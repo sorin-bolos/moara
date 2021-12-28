@@ -372,3 +372,18 @@ pub fn a(theta:f32, phi:f32) -> [Complex32; 16] {
    C!(0), C!((theta.sin())) * C!(-phi*i).exp(), C!((-theta.cos())), C!(0),
    C!(0), C!(0), C!(0), C!(1)]
 }
+
+pub fn molmer_sorensen() -> [Complex32; 16] {
+  [C!(1), C!(0), C!(0), C!(1*i),
+   C!(0), C!(1), C!(1*i), C!(0),
+   C!(0), C!(1*i), C!(1), C!(0),
+   C!(1*i), C!(0), C!(0), C!(1)]
+}
+
+
+pub fn molmer_sorensen_dagger() -> [Complex32; 16] {
+  [C!(1), C!(0), C!(0), C!(-1*i),
+   C!(0), C!(1), C!(-1*i), C!(0),
+   C!(0), C!(-1*i), C!(1), C!(0),
+   C!(-1*i), C!(0), C!(0), C!(1)]
+}
