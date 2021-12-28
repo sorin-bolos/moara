@@ -374,16 +374,20 @@ pub fn a(theta:f32, phi:f32) -> [Complex32; 16] {
 }
 
 pub fn molmer_sorensen() -> [Complex32; 16] {
-  [C!(1), C!(0), C!(0), C!(1*i),
-   C!(0), C!(1), C!(1*i), C!(0),
-   C!(0), C!(1*i), C!(1), C!(0),
-   C!(1*i), C!(0), C!(0), C!(1)]
+  let factor = 1.0/2.0_f32.sqrt();
+
+  [C!(factor), C!(0), C!(0), C!(factor*i),
+   C!(0), C!(factor), C!(factor*i), C!(0),
+   C!(0), C!(factor*i), C!(factor), C!(0),
+   C!(factor*i), C!(0), C!(0), C!(factor)]
 }
 
 
 pub fn molmer_sorensen_dagger() -> [Complex32; 16] {
-  [C!(1), C!(0), C!(0), C!(-1*i),
-   C!(0), C!(1), C!(-1*i), C!(0),
-   C!(0), C!(-1*i), C!(1), C!(0),
-   C!(-1*i), C!(0), C!(0), C!(1)]
+  let factor = 1.0/2.0_f32.sqrt();
+
+  [C!(factor), C!(0), C!(0), C!(-factor*i),
+   C!(0), C!(factor), C!(-factor*i), C!(0),
+   C!(0), C!(-factor*i), C!(factor), C!(0),
+   C!(-factor*i), C!(0), C!(0), C!(factor)]
 }
