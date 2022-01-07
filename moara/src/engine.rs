@@ -11,7 +11,7 @@ const MEASUREMENT_X: &str = "measure-x";
 const MEASUREMENT_Y: &str = "measure-y";
 const MEASUREMENT_Z: &str = "measure-z";
 
-const KNOWN_CONTROL_STATES: [&str; 2] = ["0", "1"];
+const KNOWN_CONTROL_STATES: [&str; 6] = ["0", "1", "+", "-", "+i", "-i"];
 
 pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>, HashMap<u8,u8>) {
     let mut measurements = HashMap::new();
@@ -57,9 +57,11 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
                 panic!("Too many targets for gate {} at step {}", gate.name, step.index);
             }
 
+            rotate_single_qubit_states_to_match_control_states(&mut statevector, gate.controls.to_vec(), qubit_count);
+
             if gate.targets.len() == 2 {
                 let multi_target_operator = gate_mapper::get_double_target_operator(&gate);
-                apply_double_target_operator(multi_target_operator, &mut statevector, gate.targets[0], gate.targets[1], qubit_count, gate.controls);
+                apply_double_target_operator(multi_target_operator, &mut statevector, gate.targets[0], gate.targets[1], qubit_count, gate.controls.to_vec());
             } else {
                 let target = gate.targets[0];
                 if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
@@ -74,12 +76,42 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
                 }
 
                 let single_qubit_operator = gate_mapper::get_single_qubit_operator(&gate);
-                apply_operator(single_qubit_operator, &mut statevector, target, qubit_count, gate.controls);
+                apply_operator(single_qubit_operator, &mut statevector, target, qubit_count, gate.controls.to_vec());
             }
+
+            undo_rotate_single_qubit_states_to_match_control_states(&mut statevector, gate.controls.to_vec(), qubit_count);
         }
     }
 
     (statevector, measurements)
+}
+
+fn rotate_single_qubit_states_to_match_control_states(statevector: &mut Vec<Complex32>, controls:Vec<Control>, qubit_count:u8){
+  for control in controls {
+    let target = control.target;
+    let state = control.state;
+    if state == "+" || state == "-" {
+      let single_qubit_operator = gate_mapper::get_qubit_rotation_operator("X");
+      apply_operator(single_qubit_operator, statevector, target, qubit_count, Vec::new());
+    } else if state == "+i" || state == "-i" {
+      let single_qubit_operator = gate_mapper::get_qubit_rotation_operator("Y");
+      apply_operator(single_qubit_operator, statevector, target, qubit_count, Vec::new());
+    }
+  }
+}
+
+fn undo_rotate_single_qubit_states_to_match_control_states(statevector: &mut Vec<Complex32>, controls:Vec<Control>, qubit_count:u8){
+  for control in controls {
+    let target = control.target;
+    let state = control.state;
+    if state == "+" || state == "-" {
+      let single_qubit_operator = gate_mapper::get_qubit_undo_rotation_operator("X");
+      apply_operator(single_qubit_operator, statevector, target, qubit_count, Vec::new());
+    } else if state == "+i" || state == "-i" {
+      let single_qubit_operator = gate_mapper::get_qubit_undo_rotation_operator("Y");
+      apply_operator(single_qubit_operator, statevector, target, qubit_count, Vec::new());
+    }
+  }
 }
 
 fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, target: u8, qubit_count:u8, controls:Vec<Control>) {
@@ -93,7 +125,7 @@ fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, tar
         for control in &controls {
             let control_positon = if control.target < target { control.target } else { control.target-1 };
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
-            affected = if control.state == "1" { affected1 } else { affected0 };
+            affected = if control.state == "1"  || control.state == "+" || control.state == "+i" { affected1 } else { affected0 };
 
             n_size += 1;
         }
@@ -126,7 +158,7 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
                           else { control.target-2 } };
 
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
-            affected = if control.state == "1" { affected1 } else { affected0 };
+            affected = if control.state == "1" || control.state == "+" || control.state == "+i" { affected1 } else { affected0 };
 
             n_size += 1;
         }

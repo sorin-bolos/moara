@@ -233,6 +233,30 @@ pub fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4] {
     }
 }
 
+pub fn get_qubit_rotation_operator(basis: &str) -> [Complex32; 4] {
+
+  // X-basis: |+⟩ = 1/√2(|0⟩ + |1⟩), |-⟩ = 1/√2(|0⟩ - |1⟩)
+  // Y-basis: |+i⟩ = 1/√2(|0⟩ + i|1⟩), |-i⟩ = 1/√2(|0⟩ - i|1⟩)
+
+  match basis {
+    "X" => gates::x_basis_to_standard_basis_rotation(),
+    "Y" => gates::y_basis_to_standard_basis_rotation(),
+    unknown_basis => panic!("Unknown basis {}", unknown_basis)
+  }
+}
+
+pub fn get_qubit_undo_rotation_operator(basis: &str) -> [Complex32; 4] {
+
+// X-basis: |+⟩ = 1/√2(|0⟩ + |1⟩), |-⟩ = 1/√2(|0⟩ - |1⟩)
+// Y-basis: |+i⟩ = 1/√2(|0⟩ + i|1⟩), |-i⟩ = 1/√2(|0⟩ - i|1⟩)
+
+  match basis {
+    "X" => gates::standard_basis_to_x_basis_rotation(),
+    "Y" => gates::standard_basis_to_y_basis_rotation(),
+    unknown_basis => panic!("Unknown basis {}", unknown_basis)
+  }
+}
+
 fn get_value_from_root(root_value: &String) -> f32 {
 
     let t_str = if root_value.starts_with("1/") { root_value[2..].to_string() } else { root_value[..].to_string() };

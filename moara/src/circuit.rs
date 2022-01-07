@@ -58,6 +58,7 @@ pub struct Gate
 
 #[serde_as]
 #[derive(Deserialize)]
+#[derive(Clone)]
 pub struct Control 
 {
     pub target:u8,

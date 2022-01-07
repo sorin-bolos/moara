@@ -57,6 +57,22 @@ pub fn h_dagger() -> [Complex32; 4] {
   [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0)]
 }
 
+pub fn y_basis_to_standard_basis_rotation() -> [Complex32; 4] {
+  [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0,-1.0/2.0_f32.sqrt()), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0, 1.0/2.0_f32.sqrt())]
+}
+
+pub fn standard_basis_to_y_basis_rotation() -> [Complex32; 4] {
+  [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(0.0, 1.0/2.0_f32.sqrt()), Complex32::new(0.0, -1.0/2.0_f32.sqrt())]
+}
+
+pub fn standard_basis_to_x_basis_rotation() -> [Complex32; 4] {
+  [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0)]
+}
+
+pub fn x_basis_to_standard_basis_rotation() -> [Complex32; 4] {
+  [Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0)]
+}
+
 pub fn t() -> [Complex32; 4] {
     let pi_over_4 = PI/4_f32;
     [C!(1), C!(0), C!(0), C!(pi_over_4*i).exp()]
