@@ -125,7 +125,7 @@ fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, tar
         for control in &controls {
             let control_positon = if control.target < target { control.target } else { control.target-1 };
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
-            affected = if control.state == "1"  || control.state == "+" || control.state == "+i" { affected1 } else { affected0 };
+            affected = if control.state == "1"  || control.state == "-" || control.state == "-i" { affected1 } else { affected0 };
 
             n_size += 1;
         }
@@ -158,7 +158,7 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
                           else { control.target-2 } };
 
             let (affected0, affected1) = get_indexes(affected, control_positon, n_size);
-            affected = if control.state == "1" || control.state == "+" || control.state == "+i" { affected1 } else { affected0 };
+            affected = if control.state == "1" || control.state == "-" || control.state == "-i" { affected1 } else { affected0 };
 
             n_size += 1;
         }
