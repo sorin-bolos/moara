@@ -28,6 +28,13 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
         let mut afected_qubits = HashSet::new();
         
         for gate in step.gates {
+
+            // barrier gate is useful only when circuit is converted to Qiskit/QASM format
+            // otherwise only provides visual separation betweeen different portions of a circuit 
+            if gate.name == "barrier" {
+              continue;
+            }
+
             for target in &gate.targets {
                 if measurements.contains_key(target) {
                     panic!("The qubit {} has been measured. Cannot add gates at step {} after measurement", target, step.index);
