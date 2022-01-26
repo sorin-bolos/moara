@@ -61,7 +61,9 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
                 panic!("No targets and no aggregated gates provided for gate {} at step {}", gate.name, step.index);
             }
 
-            if gate.targets.len() > 2 {
+            if gate.name == "aggregate" && gate.targets.len() > 1 {
+                panic!("Too many targets for gate {} at step {}", gate.name, step.index);
+            } else if gate.targets.len() > 2 {
                 panic!("Too many targets for gate {} at step {}", gate.name, step.index);
             }
 
