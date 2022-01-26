@@ -35,6 +35,9 @@ pub struct Gate
     #[serde(default)]
     pub controls:Vec<Control>,
 
+    #[serde(default)]
+    pub gates:Vec<AggregatedGate>,
+
     #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
     #[serde(default)]
     pub bit:Option<u8>,
@@ -65,11 +68,39 @@ pub struct Control
     pub state:String,
 }
 
+#[serde_as]
+#[derive(Deserialize)]
+#[derive(Clone)]
+pub struct AggregatedGate 
+{
+    pub name:String,
+    
+    #[serde(default)]
+    pub targets:Vec<u8>,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
+    pub phi:Option<f32>,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
+    pub theta:Option<f32>,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
+    pub lambda:Option<f32>,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
+    pub root:Option<String>,
+
+}
+
 impl Gate {
     pub fn get_min_qubit_index(&self) -> u8 {
-        let mut min_index = self.targets[0];
+        let mut min_index = u8::MAX;
 
-        for i in 1..self.targets.len() {
+        for i in 0..self.targets.len() {
             if self.targets[i] < min_index {
                 min_index = self.targets[i];
             }
@@ -81,13 +112,21 @@ impl Gate {
             }
         }
 
+        for gate in &self.gates {
+            for i in 0..gate.targets.len() {
+                if gate.targets[i] < min_index {
+                    min_index = gate.targets[i];
+                }
+            }
+        }
+
         min_index
     }
 
     pub fn get_max_qubit_index(&self) -> u8 {
-        let mut max_index = self.targets[0];
+        let mut max_index = u8::MIN;
 
-        for i in 1..self.targets.len() {
+        for i in 0..self.targets.len() {
             if self.targets[i] > max_index {
                 max_index = self.targets[i];
             }
@@ -97,6 +136,14 @@ impl Gate {
             if control.target > max_index {
                 max_index = control.target;
             }
+        }
+
+        for gate in &self.gates {
+          for i in 0..gate.targets.len() {
+              if gate.targets[i] > max_index {
+                  max_index = gate.targets[i];
+              }
+          }
         }
 
         max_index

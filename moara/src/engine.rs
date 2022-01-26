@@ -4,6 +4,7 @@ use std::collections::HashSet;
 use std::collections::HashMap;
 use num_complex::Complex32;
 use super::circuit::Circuit;
+use crate::circuit::Gate;
 use crate::circuit::Control;
 use super::gate_mapper;
 
@@ -49,8 +50,8 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
                 }
             }
 
-            if gate.targets.len() == 0 {
-                panic!("No target provided for gate {} at step {}", gate.name, step.index);
+            if gate.targets.len() == 0 && gate.gates.len() == 0 {
+                panic!("No targets and no aggregated gates provided for gate {} at step {}", gate.name, step.index);
             }
 
             if gate.targets.len() > 2 {
@@ -59,7 +60,25 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
 
             rotate_single_qubit_states_to_match_control_states(&mut statevector, gate.controls.to_vec(), qubit_count);
 
-            if gate.targets.len() == 2 {
+            if gate.name == "aggregate" {
+              
+              for aggregated_gate in &gate.gates {
+                let regular_gate = Gate {
+                  name: aggregated_gate.name.clone(),
+                  targets: aggregated_gate.targets.to_vec(),
+                  controls: gate.controls.to_vec(),
+                  phi: aggregated_gate.phi,
+                  theta: aggregated_gate.theta,
+                  lambda: aggregated_gate.lambda,
+                  root: aggregated_gate.root.clone(),
+                  bit: None,
+                  gates: Vec::new()
+                };
+                let single_qubit_operator = gate_mapper::get_single_qubit_operator(&regular_gate);
+                apply_operator(single_qubit_operator, &mut statevector, regular_gate.targets[0], qubit_count, regular_gate.controls);
+              }
+
+            } else if gate.targets.len() == 2 {
                 let multi_target_operator = gate_mapper::get_double_target_operator(&gate);
                 apply_double_target_operator(multi_target_operator, &mut statevector, gate.targets[0], gate.targets[1], qubit_count, gate.controls.to_vec());
             } else {
