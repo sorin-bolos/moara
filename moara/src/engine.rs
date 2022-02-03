@@ -63,7 +63,7 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
 
             if gate.name == "aggregate" && gate.targets.len() > 1 {
                 panic!("Too many targets for gate {} at step {}", gate.name, step.index);
-            } else if gate.targets.len() > 2 {
+            } else if gate.name != "qft" && gate.name != "qft-dagger" && gate.targets.len() > 2 {
                 panic!("Too many targets for gate {} at step {}", gate.name, step.index);
             }
 
@@ -84,12 +84,15 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
                   gates: Vec::new()
                 };
                 let single_qubit_operator = gate_mapper::get_single_qubit_operator(&regular_gate);
-                apply_operator(single_qubit_operator, &mut statevector, regular_gate.targets[0], qubit_count, regular_gate.controls);
+                apply_operator(single_qubit_operator, &mut statevector, regular_gate.targets[0], regular_gate.controls, qubit_count);
               }
-
+            } else if gate.name == "qft" {
+              apply_qft_gate(&mut statevector,  gate.targets.to_vec(), gate.controls.to_vec(), qubit_count);
+            } else if gate.name == "qft-dagger" {
+              apply_qft_dagger_gate(&mut statevector, gate.targets.to_vec(), gate.controls.to_vec(), qubit_count);
             } else if gate.targets.len() == 2 {
                 let multi_target_operator = gate_mapper::get_double_target_operator(&gate);
-                apply_double_target_operator(multi_target_operator, &mut statevector, gate.targets[0], gate.targets[1], qubit_count, gate.controls.to_vec());
+                apply_double_target_operator(multi_target_operator, &mut statevector, gate.targets.to_vec(), gate.controls.to_vec(), qubit_count);
             } else {
                 let target = gate.targets[0];
                 if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
@@ -104,7 +107,7 @@ pub fn get_final_statevector(qubit_count:u8, circuit:Circuit) -> (Vec<Complex32>
                 }
 
                 let single_qubit_operator = gate_mapper::get_single_qubit_operator(&gate);
-                apply_operator(single_qubit_operator, &mut statevector, target, qubit_count, gate.controls.to_vec());
+                apply_operator(single_qubit_operator, &mut statevector, target, gate.controls.to_vec(), qubit_count);
             }
 
             undo_rotate_single_qubit_states_to_match_control_states(&mut statevector, gate.controls.to_vec(), qubit_count);
@@ -120,10 +123,10 @@ fn rotate_single_qubit_states_to_match_control_states(statevector: &mut Vec<Comp
     let state = control.state;
     if state == "+" || state == "-" {
       let single_qubit_operator = gate_mapper::get_qubit_rotation_operator("X");
-      apply_operator(single_qubit_operator, statevector, target, qubit_count, Vec::new());
+      apply_operator(single_qubit_operator, statevector, target, Vec::new(), qubit_count);
     } else if state == "+i" || state == "-i" {
       let single_qubit_operator = gate_mapper::get_qubit_rotation_operator("Y");
-      apply_operator(single_qubit_operator, statevector, target, qubit_count, Vec::new());
+      apply_operator(single_qubit_operator, statevector, target, Vec::new(), qubit_count);
     }
   }
 }
@@ -134,15 +137,15 @@ fn undo_rotate_single_qubit_states_to_match_control_states(statevector: &mut Vec
     let state = control.state;
     if state == "+" || state == "-" {
       let single_qubit_operator = gate_mapper::get_qubit_undo_rotation_operator("X");
-      apply_operator(single_qubit_operator, statevector, target, qubit_count, Vec::new());
+      apply_operator(single_qubit_operator, statevector, target, Vec::new(), qubit_count);
     } else if state == "+i" || state == "-i" {
       let single_qubit_operator = gate_mapper::get_qubit_undo_rotation_operator("Y");
-      apply_operator(single_qubit_operator, statevector, target, qubit_count, Vec::new());
+      apply_operator(single_qubit_operator, statevector, target, Vec::new(), qubit_count);
     }
   }
 }
 
-fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, target: u8, qubit_count:u8, controls:Vec<Control>) {
+fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, target: u8, controls:Vec<Control>, qubit_count:u8) {
     let controls_count = controls.len() as u8;
     let n = 1 << (qubit_count - controls_count - 1);
 
@@ -172,9 +175,12 @@ fn apply_operator(operator:[Complex32; 4], statevector: &mut Vec<Complex32>, tar
     }
 }
 
-fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<Complex32>, target1: u8, target2: u8, qubit_count:u8, controls:Vec<Control>) {
+fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
     let controls_count = controls.len() as u8;
     let n = 1 << (qubit_count - controls_count - 2);
+
+    let target1 = targets[0];
+    let target2 = targets[1];
 
     for i in 0..n {
         let mut n_size = qubit_count - controls_count-1;
@@ -226,6 +232,139 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
         statevector[index11] = m1100*sv00 + m1101*sv01 + m1110*sv10 + m1111*sv11;
     }
 }
+
+fn apply_qft_gate(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
+
+    let no_targets = targets.len();
+    let swapped_targets = get_swapped_targets(targets);
+
+    for i in 0..no_targets {
+        let mut pass_targets = Vec::new();
+        for j in i..no_targets {
+          pass_targets.push(swapped_targets[j]);
+        }
+        apply_qft_pass(statevector, pass_targets, controls.to_vec(), qubit_count);
+    }
+}
+
+fn apply_qft_dagger_gate(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
+
+  let no_targets = targets.len();
+  let swapped_targets = get_swapped_targets(targets);
+
+  for i in (0..no_targets).rev() {
+      let mut pass_targets = Vec::new();
+      for j in (i..no_targets).rev() {
+        pass_targets.push(swapped_targets[j]);
+      }
+      apply_qft_dagger_pass(statevector, pass_targets, controls.to_vec(), qubit_count);
+  }
+}
+
+fn apply_qft_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
+
+    let no_targets = targets.len();
+    let target = targets[0];
+
+    let hadamard_gate = get_hadamard_gate();
+    let hadamard_gate_operator = gate_mapper::get_single_qubit_operator(&hadamard_gate);
+    apply_operator(hadamard_gate_operator, statevector, target, controls.to_vec(), qubit_count);
+
+    for i in 1..no_targets {
+      let mut full_controls =  controls.to_vec();
+      full_controls.push(Control { target:targets[i], state:String::from("1") });
+      full_controls.sort_by(|a, b| b.target.cmp(&a.target));
+
+      let pauli_z_root_gate = get_pauli_z_root_gate(i + 1);
+      let pauli_z_root_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_gate);
+      apply_operator(pauli_z_root_gate_operator, statevector, target, full_controls, qubit_count);
+    }
+}
+
+fn apply_qft_dagger_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
+
+  let no_targets = targets.len();
+  let target = targets[no_targets - 1];
+
+  for i in 0..(no_targets - 1) {
+    let mut full_controls = controls.to_vec();
+    full_controls.push(Control { target:targets[i], state:String::from("1") });
+    full_controls.sort_by(|a, b| b.target.cmp(&a.target));
+
+    let pauli_z_root_dagger_gate = get_pauli_z_root_dagger_gate(no_targets - 1 - i);
+    let pauli_z_root_dagger_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_dagger_gate);
+    apply_operator(pauli_z_root_dagger_gate_operator, statevector, target, full_controls, qubit_count);
+  }
+
+  let hadamard_gate = get_hadamard_gate();
+  let hadamard_gate_operator = gate_mapper::get_single_qubit_operator(&hadamard_gate);
+  apply_operator(hadamard_gate_operator, statevector, target, controls.to_vec(), qubit_count);
+}
+
+fn get_swapped_targets(targets:Vec<u8>) -> Vec<u8> {
+
+  let no_targets = targets.len();
+  let mut swapped_targets =  targets.to_vec();
+ 
+  for i in 0..no_targets {
+    if i < no_targets - 1 - i {
+      swapped_targets[i] = targets[no_targets - 1 - i];
+      swapped_targets[no_targets - 1 - i] = targets[i];
+    } else if i == no_targets - 1 - i {
+      // do nothing
+    } else {
+      break;
+    }
+  }
+
+  swapped_targets
+}
+
+fn get_hadamard_gate() -> Gate {
+
+  Gate {
+    name: String::from("hadamard"),
+    targets: Vec::new(),
+    controls: Vec::new(),
+    phi: None,
+    theta: None,
+    lambda: None,
+    root: None,
+    bit: None,
+    gates: Vec::new()
+  }
+}
+
+fn get_pauli_z_root_gate(pow:usize) -> Gate {
+
+  Gate {
+    name: String::from("pauli-z-root"),
+    targets: Vec::new(),
+    controls: Vec::new(),
+    phi: None,
+    theta: None,
+    lambda: None,
+    root: Some(format!("1/2^{}", pow)),
+    bit: None,
+    gates: Vec::new()
+  }
+}
+
+fn get_pauli_z_root_dagger_gate(pow:usize) -> Gate {
+
+  Gate {
+    name: String::from("pauli-z-root-dagger"),
+    targets: Vec::new(),
+    controls: Vec::new(),
+    phi: None,
+    theta: None,
+    lambda: None,
+    root: Some(format!("1/2^{}", pow)),
+    bit: None,
+    gates: Vec::new()
+  }
+}
+
 
 fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     let reversed_gate_position = qubit_count - gate_position - 1;
