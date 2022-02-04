@@ -160,6 +160,13 @@ pub fn get_single_qubit_operator(gate:&Gate) -> [Complex32; 4] {
             };
             gates::u1(lambda)
         },
+        "p" => {
+          let theta = match gate.theta{
+              Some(theta_value) => theta_value,
+              None => panic!("p for qubit {} has no value for theta", gate.targets[0])
+          };
+          gates::p(theta)
+        },
         "rx-theta" => {
             let theta = match gate.theta{
                 Some(theta_value) => theta_value,

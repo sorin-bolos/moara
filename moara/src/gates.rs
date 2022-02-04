@@ -111,6 +111,11 @@ pub fn u1(lambda:f32) -> [Complex32; 4] {
     [C!(1), C!(0), C!(0), C!(lambda*i).exp()]
 }
 
+pub fn p(theta:f32) -> [Complex32; 4] {
+  [C!(1), C!(0), C!(0), C!(theta*i).exp()]
+}
+
+
 pub fn rx_theta(theta:f32) -> [Complex32; 4] {
     let half_theta = theta/2f32;
     let a = C!((half_theta.cos()));
