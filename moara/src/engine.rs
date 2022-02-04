@@ -275,7 +275,7 @@ fn apply_qft_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Ve
       full_controls.push(Control { target:targets[i], state:String::from("1") });
       full_controls.sort_by(|a, b| b.target.cmp(&a.target));
 
-      let pauli_z_root_gate = get_pauli_z_root_gate(i + 1);
+      let pauli_z_root_gate = get_pauli_z_root_gate(i);
       let pauli_z_root_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_gate);
       apply_operator(pauli_z_root_gate_operator, statevector, target, full_controls, qubit_count);
     }
@@ -286,12 +286,12 @@ fn apply_qft_dagger_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, cont
   let no_targets = targets.len();
   let target = targets[no_targets - 1];
 
-  for i in 0..(no_targets - 1) {
+  for i in 1..no_targets {
     let mut full_controls = controls.to_vec();
-    full_controls.push(Control { target:targets[i], state:String::from("1") });
+    full_controls.push(Control { target:targets[i - 1], state:String::from("1") });
     full_controls.sort_by(|a, b| b.target.cmp(&a.target));
 
-    let pauli_z_root_dagger_gate = get_pauli_z_root_dagger_gate(no_targets - 1 - i);
+    let pauli_z_root_dagger_gate = get_pauli_z_root_dagger_gate(no_targets - i);
     let pauli_z_root_dagger_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_dagger_gate);
     apply_operator(pauli_z_root_dagger_gate_operator, statevector, target, full_controls, qubit_count);
   }
