@@ -336,7 +336,7 @@ pub fn ecp_dagger() -> [Complex32; 16] {
 pub fn w() -> [Complex32; 16] {
   [C!(1), C!(0), C!(0), C!(0),
    C!(0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), C!(0),
-   C!(0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), C!(0),
+   C!(0), Complex32::new(1.0/2.0_f32.sqrt(),0.0), Complex32::new(-1.0/2.0_f32.sqrt(),0.0), C!(0),
    C!(0), C!(0), C!(0), C!(1)]
 }
 
