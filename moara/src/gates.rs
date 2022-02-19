@@ -313,8 +313,8 @@ pub fn berkeley_dagger() -> [Complex32; 16] {
 
 pub fn ecp() -> [Complex32; 16] {
 
-  let c = (PI/8_f32).cos();
-  let s = (PI/8_f32).sin();
+  let c = (1.0/2.0_f32) * (PI/8_f32).cos();
+  let s = (1.0/2.0_f32) * (PI/8_f32).sin();
 
   [C!((2_f32*c)), C!(0), C!(0), C!((-2_f32*s)*i),
    C!(0), C!(1+1*i)*(c-s), C!(1-1*i)*(c+s), C!(0),
@@ -324,8 +324,8 @@ pub fn ecp() -> [Complex32; 16] {
 
 pub fn ecp_dagger() -> [Complex32; 16] {
 
-  let c = (PI/8_f32).cos();
-  let s = (PI/8_f32).sin();
+  let c = (1.0/2.0_f32) * (PI/8_f32).cos();
+  let s = (1.0/2.0_f32) * (PI/8_f32).sin();
 
   [C!((2_f32*c)), C!(0), C!(0), C!((2_f32*s)*i),
    C!(0), C!(1-1*i)*(c-s), C!(1+1*i)*(c+s), C!(0),
