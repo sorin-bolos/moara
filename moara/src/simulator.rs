@@ -3,7 +3,7 @@ use super::circuit::Circuit;
 use super::engine;
 use super::measurement;
 
-pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) -> Vec<u32> {
+pub fn simulate(serialized_circuit:String, shots:u32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<u32> {
     let (circuit, count) = deserialize(serialized_circuit, qubit_count);
 
     if count == 0 {
@@ -16,12 +16,22 @@ pub fn simulate(serialized_circuit:String, shots:u32, qubit_count:Option<u8>) ->
 
     let (final_statevector, measurements) = engine::get_final_statevector(count, circuit);
 
-    let samples = measurement::measure(final_statevector, shots, measurements, count);
+    let endianess:String = match endianess {
+      Some(endianess) => endianess,
+      None => String::from("bigendian"),
+    };
 
-    samples
+    if endianess == String::from("bigendian") {
+      measurement::measure(final_statevector, shots, measurements, count)
+    } else if endianess == String::from("littleendian") {
+      let reordered_state_vector = reorder_state_vector(final_statevector, count);
+      measurement::measure(reordered_state_vector, shots, measurements, count)
+    } else {
+      panic!("endianess can be either: 'bigendian' or 'littleendian'")
+    }
 }
 
-pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<Complex32> {
+pub fn get_statevector(serialized_circuit:String, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<Complex32> {
     let (circuit, count) = deserialize(serialized_circuit, qubit_count);
 
     if count == 0 {
@@ -30,19 +40,76 @@ pub fn get_statevector(serialized_circuit:String, qubit_count:Option<u8>) -> Vec
 
     let (final_statevector, _) = engine::get_final_statevector(count, circuit);
 
-    final_statevector
+    let endianess:String = match endianess {
+      Some(endianess) => endianess,
+      None => String::from("bigendian"),
+    };
+
+    if endianess == String::from("bigendian") {
+      final_statevector
+    } else if endianess == String::from("littleendian") {
+      reorder_state_vector(final_statevector, count)
+    } else {
+      panic!("endianess can be either: 'bigendian' or 'littleendian'")
+    } 
 }
 
-pub fn get_probabilities(serialized_circuit:String, qubit_count:Option<u8>) -> Vec<f32> {
+pub fn get_probabilities(serialized_circuit:String, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<f32> {
     let (circuit, count) = deserialize(serialized_circuit, qubit_count);
-
+    
     if count == 0 {
         return vec![];
     }
 
     let (statevector, measurements) = engine::get_final_statevector(count, circuit);
-    
-    measurement::get_probabilities(statevector, measurements, count)
+
+    let endianess:String = match endianess {
+      Some(endianess) => endianess,
+      None => String::from("bigendian"),
+    };
+
+    if endianess == String::from("bigendian") {
+      measurement::get_probabilities(statevector, measurements, count)
+    } else if endianess == String::from("littleendian") {
+      let reordered_state_vector = reorder_state_vector(statevector, count);
+      measurement::get_probabilities(reordered_state_vector, measurements, count)
+    } else {
+      panic!("endianess can be either: 'bigendian' or 'littleendian'")
+    }
+}
+
+fn reorder_state_vector(mut statevector:Vec<Complex32>, qubit_count:u8) -> Vec<Complex32> {
+  let length = statevector.len();
+  for i in 0..length {
+    let fst = i;
+    let snd = get_reversed_qbits_state(qubit_count, i);
+    if fst < snd {
+      let tmp = statevector[fst];
+      statevector[fst] = statevector[snd];
+      statevector[snd] = tmp;
+    }
+  }
+  statevector
+}
+
+fn get_reversed_qbits_state(mut qbits: u8, mut state: usize) -> usize
+{
+    let mut rev = 0;
+    while qbits > 0 {
+
+      // bitwise left shift 'rev' by 1
+      rev <<= 1;
+  
+      // if current bit is '1'
+      if state & 1 == 1 {
+        rev ^= 1;
+      }
+
+      // bitwise right shift 'state' by 1
+      state >>= 1;
+      qbits -= 1;
+  }
+  rev
 }
 
 fn deserialize(serialized_circuit:String, qubit_count:Option<u8>) -> (Circuit, u8) {

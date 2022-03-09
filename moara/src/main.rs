@@ -14,31 +14,31 @@ fn main() {
     let config = Config::from_args();
 
     match config.command {
-        Command::Sample { circuit_filename, qubit_count, shots, output } => {
+        Command::Sample { circuit_filename, qubit_count, shots, endianess, output } => {
             let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
                 println!("{}", err);
                 process::exit(1);
             });
 
-            let results = moara::simulate(serialized_circuit, shots, qubit_count);
+            let results = moara::simulate(serialized_circuit, shots, endianess, qubit_count);
             output_u32(results, output);
         },
-        Command::Probabilities { circuit_filename, qubit_count, output } => {
+        Command::Probabilities { circuit_filename, qubit_count, endianess, output } => {
             let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
                 println!("{}", err);
                 process::exit(1);
             });
 
-            let results = moara::get_probabilities(serialized_circuit, qubit_count);
+            let results = moara::get_probabilities(serialized_circuit, endianess, qubit_count);
             output_f32(results, output);
         },
-        Command::Statevector { circuit_filename, qubit_count, output } => {
+        Command::Statevector { circuit_filename, qubit_count, endianess, output } => {
             let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
                 println!("{}", err);
                 process::exit(1);
             });
 
-            let results = moara::get_statevector(serialized_circuit, qubit_count);
+            let results = moara::get_statevector(serialized_circuit, endianess, qubit_count);
             output_complex32(results, output);
         },
     }
@@ -212,8 +212,11 @@ enum Command {
         #[structopt(short = "s", long = "shots", default_value = "1024", help = "The number of shots")]
         shots:u32,
 
+        #[structopt(short = "e", long = "endianess", help = "Ordering for state vectors in returned array with results: 'bigendian' or 'littleendian'.")]
+        endianess:Option<String>,
+
         #[structopt(short = "o", long = "output", help = "Output filename")]
-        output:Option<PathBuf>
+        output:Option<PathBuf>,
     },
     
     #[structopt(about = "Get the final real probabilities")]
@@ -224,8 +227,11 @@ enum Command {
         #[structopt(short = "q", long = "qubits", help = "The number of qubits. Must be at least the width of the circuit.")]
         qubit_count:Option<u8>,
 
+        #[structopt(short = "e", long = "endianess", help = "Ordering for state vectors in returned array with results: 'bigendian' or 'littleendian'.")]
+        endianess:Option<String>,
+
         #[structopt(short = "o", long = "output", help = "Output filename")]
-        output:Option<PathBuf>
+        output:Option<PathBuf>,
     },
     
     #[structopt(about = "Get the final statevector")]
@@ -236,7 +242,10 @@ enum Command {
         #[structopt(short = "q", long = "qubits", help = "The number of qubits. Must be at least the width of the circuit.")]
         qubit_count:Option<u8>,
 
+        #[structopt(short = "e", long = "endianess", help = "Ordering for state vectors in returned array with results: 'bigendian' or 'littleendian'.")]
+        endianess:Option<String>,
+
         #[structopt(short = "o", long = "output", help = "Output filename")]
-        output:Option<PathBuf>
+        output:Option<PathBuf>,
     }
 }
