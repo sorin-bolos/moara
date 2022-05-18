@@ -2,22 +2,63 @@ extern crate serde;
 extern crate serde_with;
 
 use serde::Deserialize;
+use serde::Serialize;
 use serde_with::serde_as;
 use serde_with::DisplayFromStr;
 use serde_with::PickFirst;
 
 #[derive(Deserialize)]
-pub struct Circuit
-{
-    #[serde(default)]
-    pub steps:Vec<Step>
+#[derive(Serialize)]
+pub struct CircuitStates
+{ 
+  pub circuit_states:Vec<CircuitState>
 }
 
 #[derive(Deserialize)]
+#[derive(Serialize)]
+pub struct CircuitState
+{ 
+  pub circuit_id:i32,
+  pub circuit:Circuit,
+}
+
+#[derive(Deserialize)]
+#[derive(Serialize)]
+#[derive(Clone)]
+pub struct Circuit
+{
+    #[serde(default)]
+    pub version:String,
+
+    #[serde(default)]
+    pub circuit_type:String,
+
+    #[serde(default)]
+    pub circuit_id:i32,
+
+    #[serde(default)]
+    pub circuit_name:String,
+
+    #[serde(default)]
+    pub circuit_abbreviation:String,
+
+    #[serde(default)]
+    pub project_id:i32,
+
+    #[serde(default)]
+    pub project_name:String,
+
+    #[serde(default)]
+    pub steps:Vec<Step>,
+}
+
+#[derive(Deserialize)]
+#[derive(Serialize)]
+#[derive(Clone)]
 pub struct Step
 {
     #[serde(default)]
-    pub index:u16,
+    pub index:u32,
     
     #[serde(default)]
     pub gates:Vec<Gate>
@@ -25,9 +66,27 @@ pub struct Step
 
 #[serde_as]
 #[derive(Deserialize)]
+#[derive(Serialize)]
+#[derive(Clone)]
 pub struct Gate
 {
     pub name:String,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
+    pub circuit_id:Option<i32>,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
+    pub circuit_abbreviation:Option<String>,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
+    pub circuit_power:Option<i32>,
+
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    #[serde(default)]
+    pub targets_expression:Option<String>,
 
     #[serde(default)]
     pub targets:Vec<u8>,
@@ -61,6 +120,7 @@ pub struct Gate
 
 #[serde_as]
 #[derive(Deserialize)]
+#[derive(Serialize)]
 #[derive(Clone)]
 pub struct Control 
 {
@@ -70,6 +130,7 @@ pub struct Control
 
 #[serde_as]
 #[derive(Deserialize)]
+#[derive(Serialize)]
 #[derive(Clone)]
 pub struct AggregatedGate 
 {

@@ -1,10 +1,12 @@
 use num_complex::Complex32;
 use super::circuit::Circuit;
+use super::circuit::CircuitState;
 use super::engine;
 use super::measurement;
+use std::collections::HashMap;
 
-pub fn simulate(serialized_circuit:String, shots:u32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<u32> {
-    let (circuit, count) = deserialize(serialized_circuit, qubit_count);
+pub fn simulate(seralized_circuit_states:String, current_circuit_id:i32, shots:u32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<u32> {
+    let (circuits, count) = deserialize(seralized_circuit_states, current_circuit_id, qubit_count);
 
     if count == 0 {
         return vec![];
@@ -14,7 +16,7 @@ pub fn simulate(serialized_circuit:String, shots:u32, endianess:Option<String>, 
         return vec![0; 1<<count];
     }
 
-    let (final_statevector, measurements) = engine::get_final_statevector(count, circuit);
+    let (final_statevector, measurements) = engine::get_final_statevector(circuits, current_circuit_id, count);
 
     let endianess:String = match endianess {
       Some(endianess) => endianess,
@@ -31,14 +33,14 @@ pub fn simulate(serialized_circuit:String, shots:u32, endianess:Option<String>, 
     }
 }
 
-pub fn get_statevector(serialized_circuit:String, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<Complex32> {
-    let (circuit, count) = deserialize(serialized_circuit, qubit_count);
+pub fn get_statevector(seralized_circuit_states:String, current_circuit_id:i32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<Complex32> {
+    let (circuits, count) = deserialize(seralized_circuit_states, current_circuit_id, qubit_count);
 
     if count == 0 {
         return vec![];
     }
 
-    let (final_statevector, _) = engine::get_final_statevector(count, circuit);
+    let (final_statevector, _) = engine::get_final_statevector(circuits, current_circuit_id, count);
 
     let endianess:String = match endianess {
       Some(endianess) => endianess,
@@ -54,14 +56,14 @@ pub fn get_statevector(serialized_circuit:String, endianess:Option<String>, qubi
     } 
 }
 
-pub fn get_probabilities(serialized_circuit:String, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<f32> {
-    let (circuit, count) = deserialize(serialized_circuit, qubit_count);
+pub fn get_probabilities(seralized_circuit_states:String, current_circuit_id:i32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<f32> {
+    let (circuits, count) = deserialize(seralized_circuit_states, current_circuit_id, qubit_count);
     
     if count == 0 {
         return vec![];
     }
 
-    let (statevector, measurements) = engine::get_final_statevector(count, circuit);
+    let (statevector, measurements) = engine::get_final_statevector(circuits, current_circuit_id, count);
 
     let endianess:String = match endianess {
       Some(endianess) => endianess,
@@ -108,19 +110,27 @@ fn get_reversed_qbits_state(mut qbits: u8, mut state: usize) -> usize
       // bitwise right shift 'state' by 1
       state >>= 1;
       qbits -= 1;
-  }
-  rev
+    }
+    rev
 }
 
-fn deserialize(serialized_circuit:String, qubit_count:Option<u8>) -> (Circuit, u8) {
-    let circuit: Circuit = serde_json::from_str(&serialized_circuit).unwrap();
+fn deserialize(seralized_circuit_states:String, current_circuit_id:i32, qubit_count:Option<u8>) -> (HashMap<i32, Circuit>, u8) {
+    let circuit_states: Vec<CircuitState> = serde_json::from_str(&seralized_circuit_states).unwrap();
+
+    let mut circuits = HashMap::new();
+
+    for circuit_state in &circuit_states {
+      let circuit_id = circuit_state.circuit_id;
+      let circuit = circuit_state.circuit.clone();
+      circuits.insert(circuit_id, circuit);
+    }
 
     let count = match qubit_count {
         Some(working_qubit_count) => working_qubit_count,
-        None => get_qubit_count_from_circuit(&circuit)
+        None => get_qubit_count_from_circuit(&circuits[&current_circuit_id])
     };
 
-    (circuit, count)
+    (circuits, count)
 }
 
 fn get_qubit_count_from_circuit(circuit:&Circuit) -> u8 {

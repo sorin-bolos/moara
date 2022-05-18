@@ -8,42 +8,65 @@ use std::path::PathBuf;
 use std::result::Result;
 use structopt::StructOpt;
 
+use moara::circuit::Circuit;
+use moara::circuit::CircuitState;
+
+use lazy_static::lazy_static;
+use regex::Regex;
 use moara;
 
 fn main() {
     let config = Config::from_args();
 
     match config.command {
-        Command::Sample { circuit_filename, qubit_count, shots, endianess, output } => {
-            let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
-                println!("{}", err);
-                process::exit(1);
-            });
-
-            let results = moara::simulate(serialized_circuit, shots, endianess, qubit_count);
+        Command::Sample { circuit_filenames, current_circuit_id, qubit_count, shots, endianess, output } => {
+            
+            let serialized_circuit_states = get_serialized_circuit_states(circuit_filenames);
+            let results = moara::simulate(serde_json::to_string(&serialized_circuit_states).unwrap(), current_circuit_id, shots, endianess, qubit_count);
             output_u32(results, output);
         },
-        Command::Probabilities { circuit_filename, qubit_count, endianess, output } => {
-            let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
-                println!("{}", err);
-                process::exit(1);
-            });
+        Command::Probabilities { circuit_filenames, current_circuit_id, qubit_count, endianess, output } => {
 
-            let results = moara::get_probabilities(serialized_circuit, endianess, qubit_count);
+            let serialized_circuit_states = get_serialized_circuit_states(circuit_filenames);   
+            let results = moara::get_probabilities(serde_json::to_string(&serialized_circuit_states).unwrap(), current_circuit_id, endianess, qubit_count);
             output_f32(results, output);
         },
-        Command::Statevector { circuit_filename, qubit_count, endianess, output } => {
-            let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
-                println!("{}", err);
-                process::exit(1);
-            });
-
-            let results = moara::get_statevector(serialized_circuit, endianess, qubit_count);
+        Command::Statevector { circuit_filenames, current_circuit_id, qubit_count, endianess, output } => {
+            
+            let serialized_circuit_states = get_serialized_circuit_states(circuit_filenames);  
+            let results = moara::get_statevector(serde_json::to_string(&serialized_circuit_states).unwrap(), current_circuit_id, endianess, qubit_count);
             output_complex32(results, output);
         },
     }
 
     
+}
+
+fn get_serialized_circuit_states(circuit_filenames: std::vec::Vec<std::path::PathBuf>) -> std::vec::Vec<moara::circuit::CircuitState> {
+
+    lazy_static! {
+      static ref CIRCUIT_ID_REGEX : Regex = Regex::new(
+        r#""circuit_id":\s([\-]?[0-9]+),"#
+      ).unwrap();
+    }
+
+    let mut seralized_circuit_states = Vec::new();
+
+    for circuit_filename in circuit_filenames {
+      let serialized_circuit = read_file(circuit_filename).unwrap_or_else(|err| {
+        println!("{}", err);
+        process::exit(1);
+      });
+      
+      let caps = CIRCUIT_ID_REGEX.captures(&serialized_circuit).unwrap();
+      let circuit_id = caps.get(1).map_or("", |m| m.as_str());
+      let circuit_id = circuit_id.parse::<i32>().unwrap();              
+      let circuit: Circuit = serde_json::from_str(&serialized_circuit).unwrap();
+      let circuit_state = CircuitState {circuit_id: circuit_id, circuit: circuit};
+      seralized_circuit_states.push(circuit_state);
+    }
+
+    seralized_circuit_states
 }
 
 fn read_file(circuit_filename:PathBuf) -> Result<String, Box<dyn Error>> {
@@ -204,7 +227,10 @@ enum Command {
     #[structopt(about = "Sample the circuit over a number of shots")]
     Sample {
         #[structopt(parse(from_os_str))]
-        circuit_filename:PathBuf,
+        circuit_filenames:Vec<PathBuf>,
+
+        #[structopt(short = "c", long = "circuitid", help = "The id of the circuit to simulate.")]
+        current_circuit_id:i32,
     
         #[structopt(short = "q", long = "qubits", help = "The number of qubits. Must be at least the width of the circuit.")]
         qubit_count:Option<u8>,
@@ -222,7 +248,10 @@ enum Command {
     #[structopt(about = "Get the final real probabilities")]
     Probabilities{
         #[structopt(parse(from_os_str))]
-        circuit_filename:PathBuf,
+        circuit_filenames:Vec<PathBuf>,
+
+        #[structopt(short = "c", long = "circuitid", help = "The id of the circuit to simulate.")]
+        current_circuit_id:i32,
     
         #[structopt(short = "q", long = "qubits", help = "The number of qubits. Must be at least the width of the circuit.")]
         qubit_count:Option<u8>,
@@ -237,7 +266,10 @@ enum Command {
     #[structopt(about = "Get the final statevector")]
     Statevector {
         #[structopt(parse(from_os_str))]
-        circuit_filename:PathBuf,
+        circuit_filenames:Vec<PathBuf>,
+
+        #[structopt(short = "c", long = "circuitid", help = "The id of the circuit to simulate.")]
+        current_circuit_id:i32,
     
         #[structopt(short = "q", long = "qubits", help = "The number of qubits. Must be at least the width of the circuit.")]
         qubit_count:Option<u8>,

@@ -5,8 +5,11 @@ authors = ["Sorin Bolos <sorinalbolos@yahoo.com>", "Voicu Tomut <tomutvoicuandre
 edition = "2018"
 
 [dependencies]
+json = "0.12.4"
+lazy_static = "1.4.0"
 num-complex = "0.3.0"
 rand = "0.8"
+regex = "1.5.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_with = "1.9.2"

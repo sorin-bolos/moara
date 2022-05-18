@@ -10,17 +10,17 @@ pub mod measurement;
 
 use num_complex::Complex32;
 
-pub fn simulate(serialized_circuit:String, shots:u32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<u32>
+pub fn simulate(seralized_circuit_states:String, current_circuit_id:i32, shots:u32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<u32>
 {
-    simulator::simulate(serialized_circuit, shots, endianess, qubit_count)
+    simulator::simulate(seralized_circuit_states, current_circuit_id, shots, endianess, qubit_count)
 }
 
-pub fn get_statevector(serialized_circuit:String, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<Complex32>
+pub fn get_statevector(seralized_circuit_states:String, current_circuit_id:i32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<Complex32>
 {
-    simulator::get_statevector(serialized_circuit, endianess, qubit_count)
+    simulator::get_statevector(seralized_circuit_states, current_circuit_id, endianess, qubit_count)
 }
 
-pub fn get_probabilities(serialized_circuit:String, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<f32>
+pub fn get_probabilities(seralized_circuit_states:String, current_circuit_id:i32, endianess:Option<String>, qubit_count:Option<u8>) -> Vec<f32>
 {   
-    simulator::get_probabilities(serialized_circuit, endianess, qubit_count)
+    simulator::get_probabilities(seralized_circuit_states, current_circuit_id, endianess, qubit_count)
 }
