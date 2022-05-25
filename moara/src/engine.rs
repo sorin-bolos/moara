@@ -206,6 +206,7 @@ fn apply_circuit_gate(
   for step in ordered_steps {
     let mut afected_qubits = HashSet::new();
     for gate in step.gates {
+      let mut current_full_controls = full_controls.to_vec();
       apply_generic_gate(
         gate,
         false,
@@ -214,7 +215,7 @@ fn apply_circuit_gate(
         qubit_count,
         &circuits,
         circuit_id,
-        full_controls,
+        &mut current_full_controls,
         statevector, 
         measurements, 
         &mut afected_qubits);
@@ -239,6 +240,7 @@ fn apply_reverse_circuit_gate(
   for step in ordered_steps.iter().rev() {
     let mut afected_qubits = HashSet::new();
     for gate in step.gates.iter().rev() {
+      let mut current_full_controls = full_controls.to_vec();
       apply_generic_gate(
         gate.clone(),
         true,
@@ -247,7 +249,7 @@ fn apply_reverse_circuit_gate(
         qubit_count,
         &circuits,
         circuit_id,
-        full_controls,
+        &mut current_full_controls,
         statevector, 
         measurements, 
         &mut afected_qubits);
