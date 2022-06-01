@@ -153,19 +153,21 @@ fn output_complex32(results:Vec<Complex32>, output:Option<PathBuf>) {
 
 fn write_u32(results:Vec<u32>, writer:&mut dyn Write) {
     writer.write("[".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    for r in &results[0..results.len() - 1] {
-        if *r == 0 || *r == 1 {
-            writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-        } else {
-            writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-        }
-        writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    }
-    let r = &results[results.len()-1];
-    if *r == 0 || *r == 1 {
-        writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    } else {
-        writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    if results.len() > 0 {
+      for r in &results[0..results.len() - 1] {
+          if *r == 0 || *r == 1 {
+              writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+          } else {
+              writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+          }
+          writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      }
+      let r = &results[results.len()-1];
+      if *r == 0 || *r == 1 {
+          writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      } else {
+          writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      }
     }
     writer.write("]".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     writer.flush().unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
@@ -173,19 +175,21 @@ fn write_u32(results:Vec<u32>, writer:&mut dyn Write) {
 
 fn write_f32(results:Vec<f32>, writer:&mut dyn Write) {
     writer.write("[".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    for r in &results[0..results.len() - 1] {
-        if *r == 0.0 || *r == 1.0 {
-            writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-        } else {
-            writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-        }
-        writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    }
-    let r = &results[results.len()-1];
-    if *r == 0.0 || *r == 1.0 {
-        writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    } else {
-        writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    if results.len() > 0 {
+      for r in &results[0..results.len() - 1] {
+          if *r == 0.0 || *r == 1.0 {
+              writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+          } else {
+              writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+          }
+          writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      }
+      let r = &results[results.len()-1];
+      if *r == 0.0 || *r == 1.0 {
+          writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      } else {
+          writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      }
     }
     writer.write("]".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     writer.flush().unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
@@ -196,19 +200,21 @@ fn write_complex32(results:Vec<Complex32>, writer:&mut dyn Write) {
     let one = Complex32::new(1.0,0.0);
 
     writer.write("[".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    for r in &results[0..results.len() - 1] {
-        if *r == zero || *r == one {
-            writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-        } else {
-            writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-        }
-        writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    }
-    let r = &results[results.len()-1];
-    if *r == zero || *r == one {
-        writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
-    } else {
-        writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+    if results.len() > 0 {
+      for r in &results[0..results.len() - 1] {
+          if *r == zero || *r == one {
+              writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+          } else {
+              writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+          }
+          writer.write(", ".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      }
+      let r = &results[results.len()-1];
+      if *r == zero || *r == one {
+          writer.write(&r.to_string().as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      } else {
+          writer.write(&format!("{:e}", r).as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
+      }
     }
     writer.write("]".as_bytes()).unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
     writer.flush().unwrap_or_else(|err| { println!("{}", err); process::exit(1); });
