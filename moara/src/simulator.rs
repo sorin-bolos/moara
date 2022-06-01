@@ -26,8 +26,9 @@ pub fn simulate(seralized_circuit_states:String, current_circuit_id:i32, shots:u
     if endianess == String::from("bigendian") {
       measurement::measure(final_statevector, shots, measurements, count)
     } else if endianess == String::from("littleendian") {
-      let reordered_state_vector = reorder_state_vector(final_statevector, count);
-      measurement::measure(reordered_state_vector, shots, measurements, count)
+      let measurements_vector = measurement::measure(final_statevector, shots, measurements, count);
+      let qubit_count = (measurements_vector.len() as f64).log2() as u8;
+      reorder_vector(measurements_vector, qubit_count)
     } else {
       panic!("endianess can be either: 'bigendian' or 'littleendian'")
     }
@@ -50,7 +51,7 @@ pub fn get_statevector(seralized_circuit_states:String, current_circuit_id:i32, 
     if endianess == String::from("bigendian") {
       final_statevector
     } else if endianess == String::from("littleendian") {
-      reorder_state_vector(final_statevector, count)
+      reorder_vector(final_statevector, count)
     } else {
       panic!("endianess can be either: 'bigendian' or 'littleendian'")
     } 
@@ -73,25 +74,24 @@ pub fn get_probabilities(seralized_circuit_states:String, current_circuit_id:i32
     if endianess == String::from("bigendian") {
       measurement::get_probabilities(statevector, measurements, count)
     } else if endianess == String::from("littleendian") {
-      let reordered_state_vector = reorder_state_vector(statevector, count);
-      measurement::get_probabilities(reordered_state_vector, measurements, count)
+      let probabilities_vector = measurement::get_probabilities(statevector, measurements, count);
+      let qubit_count = (probabilities_vector.len() as f64).log2() as u8;
+      reorder_vector(probabilities_vector, qubit_count)
     } else {
       panic!("endianess can be either: 'bigendian' or 'littleendian'")
     }
 }
 
-fn reorder_state_vector(mut statevector:Vec<Complex32>, qubit_count:u8) -> Vec<Complex32> {
-  let length = statevector.len();
+fn reorder_vector<T>(mut vector:Vec<T>, qubit_count:u8) -> Vec<T> {
+  let length = vector.len();
   for i in 0..length {
     let fst = i;
     let snd = get_reversed_qbits_state(qubit_count, i);
     if fst < snd {
-      let tmp = statevector[fst];
-      statevector[fst] = statevector[snd];
-      statevector[snd] = tmp;
+      vector.swap(fst, snd);
     }
   }
-  statevector
+  vector
 }
 
 fn get_reversed_qbits_state(mut qbits: u8, mut state: usize) -> usize

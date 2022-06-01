@@ -110,10 +110,7 @@ fn apply_generic_gate(
   } else if gate.name != "qft" && gate.name != "qft-dagger" && gate.name != "circuit" && actual_targets.len() > 2 {
     panic!("Too many targets for gate {} at step {} in circuit with id {}.", gate.name, step, circuit_id);
   }
-
-  let current_full_controls = full_controls.to_vec();
-  rotate_single_qubit_states_to_match_control_states(statevector, current_full_controls.to_vec(), qubit_count);
-
+  
   if gate.name == "circuit" {
     let circuit_id = gate.circuit_id.unwrap();
     let qubit_start = actual_targets[0];
@@ -134,6 +131,7 @@ fn apply_generic_gate(
       }
     }
   } else if gate.name == "aggregate" {
+    rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
     for aggregated_gate in &gate.gates {
       let aggregated_gate_targets = aggregated_gate.targets.to_vec(); 
       let single_target_gate = Gate {
@@ -143,7 +141,7 @@ fn apply_generic_gate(
         circuit_power: None,
         targets_expression: None,
         targets: aggregated_gate_targets.into_iter().map(|x| x + qubit_start).rev().collect(),
-        controls: current_full_controls.to_vec(),
+        controls: full_controls.to_vec(),
         phi: aggregated_gate.phi,
         theta: aggregated_gate.theta,
         lambda: aggregated_gate.lambda,
@@ -154,21 +152,28 @@ fn apply_generic_gate(
       let single_qubit_operator = gate_mapper::get_single_qubit_operator(&single_target_gate, take_hermitian_conjugate);
       apply_operator(single_qubit_operator, statevector, single_target_gate.targets[0], single_target_gate.controls, qubit_count);
     }
+    undo_rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
   } else if gate.name == "qft" {
+    rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
     if take_hermitian_conjugate {
-      apply_qft_dagger_gate(statevector, actual_targets.to_vec(), current_full_controls.to_vec(), qubit_count);
+      apply_qft_dagger_gate(statevector, actual_targets.to_vec(), full_controls.to_vec(), qubit_count);
     } else {
-      apply_qft_gate(statevector,  actual_targets.to_vec(), current_full_controls.to_vec(), qubit_count);
+      apply_qft_gate(statevector,  actual_targets.to_vec(), full_controls.to_vec(), qubit_count);
     }
+    undo_rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
   } else if gate.name == "qft-dagger" {
+    rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
     if take_hermitian_conjugate {
-      apply_qft_gate(statevector,  actual_targets.to_vec(), current_full_controls.to_vec(), qubit_count);
+      apply_qft_gate(statevector,  actual_targets.to_vec(), full_controls.to_vec(), qubit_count);
     } else {
-      apply_qft_dagger_gate(statevector, actual_targets.to_vec(), current_full_controls.to_vec(), qubit_count);
+      apply_qft_dagger_gate(statevector, actual_targets.to_vec(), full_controls.to_vec(), qubit_count);
     }
+    undo_rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
   } else if actual_targets.len() == 2 {
+    rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
     let multi_target_operator = gate_mapper::get_double_target_operator(&gate, take_hermitian_conjugate);
-    apply_double_target_operator(multi_target_operator, statevector, actual_targets, current_full_controls.to_vec(), qubit_count);
+    apply_double_target_operator(multi_target_operator, statevector, actual_targets, full_controls.to_vec(), qubit_count);
+    undo_rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
   } else {
     let target = actual_targets[0];
     if gate.name == MEASUREMENT_X || gate.name == MEASUREMENT_Y || gate.name == MEASUREMENT_Z {
@@ -182,11 +187,11 @@ fn apply_generic_gate(
         }
     }
 
+    rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
     let single_qubit_operator = gate_mapper::get_single_qubit_operator(&gate, take_hermitian_conjugate);
-    apply_operator(single_qubit_operator, statevector, target, current_full_controls.to_vec(), qubit_count);
+    apply_operator(single_qubit_operator, statevector, target, full_controls.to_vec(), qubit_count);
+    undo_rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
   }
-
-  undo_rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
 }
 
 fn apply_circuit_gate(
