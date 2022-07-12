@@ -16,12 +16,12 @@ pub fn simulate(seralized_circuit_states:String, current_circuit_id:i32, shots:u
         return vec![0; 1<<count];
     }
 
-    let (final_statevector, measurements) = engine::get_final_statevector(circuits, current_circuit_id, count);
-
     let endianess:String = match endianess {
       Some(endianess) => endianess,
       None => String::from("bigendian"),
     };
+
+    let (final_statevector, measurements) = engine::get_final_statevector(circuits, current_circuit_id, count, endianess.clone());
 
     if endianess == String::from("bigendian") {
       measurement::measure(final_statevector, shots, measurements, count)
@@ -41,12 +41,12 @@ pub fn get_statevector(seralized_circuit_states:String, current_circuit_id:i32, 
         return vec![];
     }
 
-    let (final_statevector, _) = engine::get_final_statevector(circuits, current_circuit_id, count);
-
     let endianess:String = match endianess {
       Some(endianess) => endianess,
       None => String::from("bigendian"),
     };
+
+    let (final_statevector, _) = engine::get_final_statevector(circuits, current_circuit_id, count, endianess.clone());
 
     if endianess == String::from("bigendian") {
       final_statevector
@@ -64,12 +64,12 @@ pub fn get_probabilities(seralized_circuit_states:String, current_circuit_id:i32
         return vec![];
     }
 
-    let (statevector, measurements) = engine::get_final_statevector(circuits, current_circuit_id, count);
-
     let endianess:String = match endianess {
       Some(endianess) => endianess,
       None => String::from("bigendian"),
     };
+
+    let (statevector, measurements) = engine::get_final_statevector(circuits, current_circuit_id, count, endianess.clone());
 
     if endianess == String::from("bigendian") {
       measurement::get_probabilities(statevector, measurements, count)

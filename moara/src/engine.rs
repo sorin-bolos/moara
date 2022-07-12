@@ -14,7 +14,7 @@ const MEASUREMENT_Z: &str = "measure-z";
 
 const KNOWN_CONTROL_STATES: [&str; 6] = ["0", "1", "+", "-", "+i", "-i"];
 
-pub fn get_final_statevector(circuits: HashMap<i32, Circuit>, current_circuit_id:i32, qubit_count:u8) -> (Vec<Complex32>, HashMap<u8,u8>) {
+pub fn get_final_statevector(circuits: HashMap<i32, Circuit>, current_circuit_id:i32, qubit_count:u8, endianess:String) -> (Vec<Complex32>, HashMap<u8,u8>) {
     
     let circuit = circuits[&current_circuit_id].clone();
     let mut ordered_steps = circuit.steps;
@@ -37,6 +37,7 @@ pub fn get_final_statevector(circuits: HashMap<i32, Circuit>, current_circuit_id
           step.index,
           qubit_start,
           qubit_count,
+          endianess.clone(),
           &circuits,
           current_circuit_id,
           &mut full_controls,
@@ -55,6 +56,7 @@ fn apply_generic_gate(
   step:u32,
   qubit_start:u8,
   qubit_count:u8,
+  endianess:String,
   circuits: &HashMap<i32, Circuit>,
   circuit_id:i32,
   full_controls:&mut Vec<Control>,
@@ -114,20 +116,20 @@ fn apply_generic_gate(
   if gate.name == "circuit" {
     let circuit_id = gate.circuit_id.unwrap();
     let qubit_start = actual_targets[0];
-    let mut circuit_power = gate.circuit_power.unwrap();
+    let mut circuit_power = get_value_from_power(gate.circuit_power.unwrap());
     if take_hermitian_conjugate {
       circuit_power = - circuit_power;
     }
     if circuit_power > 0 {
       for _ in 0..circuit_power {
         let mut current_full_controls = full_controls.to_vec();
-        apply_circuit_gate(qubit_start, qubit_count, circuits, circuit_id, &mut current_full_controls, statevector, measurements);
+        apply_circuit_gate(qubit_start, qubit_count, endianess.clone(), circuits, circuit_id, &mut current_full_controls, statevector, measurements);
       }
     } else {
       circuit_power = - circuit_power;
       for _ in 0..circuit_power {
         let mut current_full_controls = full_controls.to_vec();
-        apply_reverse_circuit_gate(qubit_start, qubit_count, circuits, circuit_id, &mut current_full_controls, statevector, measurements);
+        apply_reverse_circuit_gate(qubit_start, qubit_count, endianess.clone(), circuits, circuit_id, &mut current_full_controls, statevector, measurements);
       }
     }
   } else if gate.name == "aggregate" {
@@ -156,17 +158,17 @@ fn apply_generic_gate(
   } else if gate.name == "qft" {
     rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
     if take_hermitian_conjugate {
-      apply_qft_dagger_gate(statevector, actual_targets.to_vec(), full_controls.to_vec(), qubit_count);
+      apply_qft_dagger_gate(statevector, actual_targets.to_vec(), full_controls.to_vec(), qubit_count, endianess);
     } else {
-      apply_qft_gate(statevector,  actual_targets.to_vec(), full_controls.to_vec(), qubit_count);
+      apply_qft_gate(statevector,  actual_targets.to_vec(), full_controls.to_vec(), qubit_count, endianess);
     }
     undo_rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
   } else if gate.name == "qft-dagger" {
     rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
     if take_hermitian_conjugate {
-      apply_qft_gate(statevector,  actual_targets.to_vec(), full_controls.to_vec(), qubit_count);
+      apply_qft_gate(statevector,  actual_targets.to_vec(), full_controls.to_vec(), qubit_count, endianess);
     } else {
-      apply_qft_dagger_gate(statevector, actual_targets.to_vec(), full_controls.to_vec(), qubit_count);
+      apply_qft_dagger_gate(statevector, actual_targets.to_vec(), full_controls.to_vec(), qubit_count, endianess);
     }
     undo_rotate_single_qubit_states_to_match_control_states(statevector, full_controls.to_vec(), qubit_count);
   } else if actual_targets.len() == 2 {
@@ -197,6 +199,7 @@ fn apply_generic_gate(
 fn apply_circuit_gate(
   qubit_start:u8,
   qubit_count:u8,
+  endianess:String,
   circuits: &HashMap<i32, Circuit>, 
   circuit_id:i32,
   full_controls:&mut Vec<Control>,
@@ -218,6 +221,7 @@ fn apply_circuit_gate(
         step.index,
         qubit_start,
         qubit_count,
+        endianess.clone(),
         &circuits,
         circuit_id,
         &mut current_full_controls,
@@ -231,6 +235,7 @@ fn apply_circuit_gate(
 fn apply_reverse_circuit_gate(
   qubit_start:u8,
   qubit_count:u8,
+  endianess:String,
   circuits: &HashMap<i32, Circuit>, 
   circuit_id:i32,
   full_controls:&mut Vec<Control>,
@@ -252,6 +257,7 @@ fn apply_reverse_circuit_gate(
         step.index,
         qubit_start,
         qubit_count,
+        endianess.clone(),
         &circuits,
         circuit_id,
         &mut current_full_controls,
@@ -378,37 +384,57 @@ fn apply_double_target_operator(operator:[Complex32; 16], statevector: &mut Vec<
     }
 }
 
-fn apply_qft_gate(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
+fn apply_qft_gate(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8, endianess:String) {
 
     let no_targets = targets.len();
 
-    for i in 0..no_targets {
+    if endianess == "bigendian" {
+      for i in 0..no_targets {
         let mut pass_targets = Vec::new();
         for j in i..no_targets {
           pass_targets.push(targets[j]);
         }
-        apply_qft_pass(statevector, pass_targets, controls.to_vec(), qubit_count);
+        apply_qft_pass(statevector, pass_targets, controls.to_vec(), qubit_count, endianess.clone());
+      }
+    } else {
+      for i in 0..no_targets {
+        let mut pass_targets = Vec::new();
+        for j in (0..(no_targets - i)).rev() {
+          pass_targets.push(targets[j]);
+        }
+        apply_qft_pass(statevector, pass_targets, controls.to_vec(), qubit_count, endianess.clone());
+      }
     }
 
     swap_qubits(statevector, targets, controls, qubit_count);
 }
 
-fn apply_qft_dagger_gate(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
+fn apply_qft_dagger_gate(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8, endianess:String) {
 
   swap_qubits(statevector, targets.to_vec(), controls.to_vec(), qubit_count);
 
   let no_targets = targets.len();
 
-  for i in (0..no_targets).rev() {
+  if endianess == "bigendian" {
+    for i in (0..no_targets).rev() {
+        let mut pass_targets = Vec::new();
+        for j in (i..no_targets).rev() {
+          pass_targets.push(targets[j]);
+        }
+        apply_qft_dagger_pass(statevector, pass_targets, controls.to_vec(), qubit_count, endianess.clone());
+    }
+  } else {
+    for i in (0..no_targets).rev() {
       let mut pass_targets = Vec::new();
-      for j in (i..no_targets).rev() {
+      for j in 0..(no_targets - i) {
         pass_targets.push(targets[j]);
       }
-      apply_qft_dagger_pass(statevector, pass_targets, controls.to_vec(), qubit_count);
+      apply_qft_dagger_pass(statevector, pass_targets, controls.to_vec(), qubit_count, endianess.clone());
+  }
   }
 }
 
-fn apply_qft_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
+fn apply_qft_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8, endianess:String) {
 
     let no_targets = targets.len();
     let target = targets[0];
@@ -417,30 +443,54 @@ fn apply_qft_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Ve
     let hadamard_gate_operator = gate_mapper::get_single_qubit_operator(&hadamard_gate, false);
     apply_operator(hadamard_gate_operator, statevector, target, controls.to_vec(), qubit_count);
 
-    for i in 1..no_targets {
-      let mut full_controls =  controls.to_vec();
-      full_controls.push(Control { target:targets[i], state:String::from("1") });
-      full_controls.sort_by(|a, b| a.target.cmp(&b.target));
+    if endianess == "bigendian" {
+      for i in 1..no_targets {
+        let mut full_controls =  controls.to_vec();
+        full_controls.push(Control { target:targets[i], state:String::from("1") });
+        full_controls.sort_by(|a, b| a.target.cmp(&b.target));
 
-      let pauli_z_root_gate = get_pauli_z_root_gate(i);
-      let pauli_z_root_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_gate, false);
-      apply_operator(pauli_z_root_gate_operator, statevector, target, full_controls, qubit_count);
+        let pauli_z_root_gate = get_pauli_z_root_gate(i);
+        let pauli_z_root_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_gate, false);
+        apply_operator(pauli_z_root_gate_operator, statevector, target, full_controls, qubit_count);
+      }
+    } else {
+      for i in 1..no_targets {
+        let mut full_controls =  controls.to_vec();
+        full_controls.push(Control { target:targets[no_targets - i], state:String::from("1") });
+        full_controls.sort_by(|a, b| a.target.cmp(&b.target));
+
+        let pauli_z_root_gate = get_pauli_z_root_gate(no_targets - i);
+        let pauli_z_root_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_gate, false);
+        apply_operator(pauli_z_root_gate_operator, statevector, target, full_controls, qubit_count);
+      }     
     }
 }
 
-fn apply_qft_dagger_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8) {
+fn apply_qft_dagger_pass(statevector: &mut Vec<Complex32>, targets:Vec<u8>, controls:Vec<Control>, qubit_count:u8, endianess:String) {
 
   let no_targets = targets.len();
   let target = targets[no_targets - 1];
 
-  for i in 1..no_targets {
-    let mut full_controls = controls.to_vec();
-    full_controls.push(Control { target:targets[i - 1], state:String::from("1") });
-    full_controls.sort_by(|a, b| a.target.cmp(&b.target));
+  if endianess == "bigendian" {
+    for i in 1..no_targets {
+      let mut full_controls = controls.to_vec();
+      full_controls.push(Control { target:targets[i - 1], state:String::from("1") });
+      full_controls.sort_by(|a, b| a.target.cmp(&b.target));
 
-    let pauli_z_root_dagger_gate = get_pauli_z_root_dagger_gate(no_targets - i);
-    let pauli_z_root_dagger_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_dagger_gate, false);
-    apply_operator(pauli_z_root_dagger_gate_operator, statevector, target, full_controls, qubit_count);
+      let pauli_z_root_dagger_gate = get_pauli_z_root_dagger_gate(no_targets - i);
+      let pauli_z_root_dagger_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_dagger_gate, false);
+      apply_operator(pauli_z_root_dagger_gate_operator, statevector, target, full_controls, qubit_count);
+    }
+  } else {
+    for i in 1..no_targets {
+      let mut full_controls = controls.to_vec();
+      full_controls.push(Control { target:targets[no_targets - i - 1], state:String::from("1") });
+      full_controls.sort_by(|a, b| a.target.cmp(&b.target));
+
+      let pauli_z_root_dagger_gate = get_pauli_z_root_dagger_gate(i);
+      let pauli_z_root_dagger_gate_operator = gate_mapper::get_single_qubit_operator(&pauli_z_root_dagger_gate, false);
+      apply_operator(pauli_z_root_dagger_gate_operator, statevector, target, full_controls, qubit_count);
+    }   
   }
 
   let hadamard_gate = get_hadamard_gate();
@@ -544,6 +594,23 @@ fn get_pauli_z_root_dagger_gate(pow:usize) -> Gate {
   }
 }
 
+fn get_value_from_power(power_value: String) -> i32 {
+
+  let mut sign = 1;
+  if power_value.starts_with("-") {
+    sign = -1;
+  }
+
+  let p_str = if power_value.starts_with("-") { power_value[1..].to_string() } else { power_value[..].to_string() };
+
+  if p_str.starts_with("2^") {
+    let p = p_str[2..].parse::<u32>().unwrap();
+    2i32.pow(p) * sign
+  }  else {
+    let p = p_str.parse::<i32>().unwrap();
+    p * sign
+  }
+}
 
 fn get_indexes(i: usize, gate_position: u8, qubit_count:u8) -> (usize, usize){
     let reversed_gate_position = qubit_count - gate_position - 1;

@@ -82,7 +82,7 @@ pub struct Gate
 
     #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
     #[serde(default)]
-    pub circuit_power:Option<i32>,
+    pub circuit_power:Option<String>,
 
     #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
     #[serde(default)]
