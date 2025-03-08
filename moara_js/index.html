@@ -1,33 +1,38 @@
 <html>
     <body>
 
-        <p>{
-            "steps": [
+      <textarea id="circuit" rows="20" cols="60">{
+        "steps": [
+          {
+            "index": 2,
+            "gates": []
+          },
+          {
+            "index": 1,
+            "gates": [
               {
-                "index": 2,
-                "gates": []
-              },
-              {
-                "index": 1,
-                "gates": [
+                "name": "pauli-x",
+                "targets": [ 1 ],
+                "controls": [
                   {
-                    "name": "ctrl-pauli-x",
-                    "target": 1,
-                    "control": 0
+                   "target": 0,
+                   "state": "1"
                   }
-                ]
-              },
-              {
-                "index": 0,
-                "gates": [
-                  {
-                    "name": "hadamard",
-                    "target": 0
-                  }
-                ]
+                 ]
               }
             ]
-          }</p>
+          },
+          {
+            "index": 0,
+            "gates": [
+              {
+                "name": "hadamard",
+                "targets": [ 0 ]
+              }
+            ]
+          }
+        ]
+      }</textarea>
         
         
         
