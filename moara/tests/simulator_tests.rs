@@ -13,7 +13,7 @@ fn simple_circuit_works() {
             \"gates\": [
               {
                 \"name\": \"hadamard\",
-                \"target\": 0
+                \"targets\": [ 0 ]
               }
             ]
           }

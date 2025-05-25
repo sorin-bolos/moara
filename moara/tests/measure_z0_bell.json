@@ -5,7 +5,7 @@
       "gates": [
         {
           "name": "hadamard",
-          "target": 0
+          "targets": [0]
         }
       ]
     },
@@ -13,9 +13,14 @@
       "index": 1,
       "gates": [
         {
-          "name": "ctrl-pauli-x",
-          "target": 1,
-          "control": 0
+          "name": "pauli-x",
+          "targets": [1],
+          "controls": [
+            {
+              "target": 0,
+              "state": "1"
+            }
+          ]
         }
       ]
     },
@@ -24,7 +29,7 @@
       "gates": [
         {
           "name": "measure-z",
-          "target": 0,
+          "targets": [0],
           "bit": 0
         }
       ]

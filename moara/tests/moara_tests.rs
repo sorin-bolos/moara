@@ -7,7 +7,7 @@ static FAILURE_MESSAGE: &str = "failed to execute process";
 #[test]
 fn entanglement_circuit_works() {
     let output = Command::new(PATH_TO_EXE)
-                .args(&["tests/entanglement_2.json"])
+                .args(&["sample","tests/entanglement_2.json", "-s", "1000"])
                 .output()
                 .expect(FAILURE_MESSAGE);
 
@@ -26,7 +26,7 @@ fn entanglement_circuit_works() {
 #[test]
 fn gate_space_two_qubit_space_gate_works() {
     let output = Command::new(PATH_TO_EXE)
-                .args(&["tests/gate_space_two_qubit_space_gate.json"])
+                .args(&["sample","tests/gate_space_two_qubit_space_gate.json", "-s", "1000"])
                 .output()
                 .expect(FAILURE_MESSAGE);
 
@@ -48,7 +48,7 @@ fn gate_space_two_qubit_space_gate_works() {
 #[test]
 fn gate_space_two_qubit_works() {
     let output = Command::new(PATH_TO_EXE)
-                .args(&["tests/gate_space_two_qubit.json"])
+                .args(&["sample","tests/gate_space_two_qubit.json", "-s", "1000"])
                 .output()
                 .expect(FAILURE_MESSAGE);
 
@@ -71,9 +71,21 @@ fn get_vector_from_string(vector_as_string:String) -> Vec<u32> {
     let data: Vec<u32> = vector_as_string.trim_start_matches('[')
                                          .trim_end_matches(']')
                                          .split(", ")
-                                         .map(|s| s.parse().unwrap())
+                                         .map(parse_numeric_string)
                                          .collect();
     data
+}
+
+fn parse_numeric_string(s: &str) -> u32 {
+    if let Ok(val) = s.parse::<u32>() {
+        return val;
+    }
+
+    if let Ok(val) = s.parse::<f32>() {
+        return val as u32;
+    }
+    
+    panic!("Failed to parse value: {}", s);
 }
 
 fn aprox_equals(a:u32, b:u32, fraction:f32) -> bool

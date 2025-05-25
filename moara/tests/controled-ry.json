@@ -5,7 +5,7 @@
         "gates": [
           {
             "name": "pauli-x",
-            "target": 0
+            "targets": [0]
          }
         ]
     },
@@ -13,10 +13,14 @@
         "index": 1,
         "gates": [
            {
-              "name": "ctrl-ry-phi",
-              "target": 1,
-              "control": 0,
-              "controlstate": "1",
+              "name": "ry-phi",
+              "targets": [1],
+              "controls": [
+                {
+                  "target": 0,
+                  "state": "1"
+                }
+              ],
               "phi": 1.570796
            }
         ]
@@ -26,7 +30,7 @@
         "gates": [
            {
               "name": "hadamard",
-              "target": 1
+              "targets": [1]
            }
         ]
      },
@@ -35,7 +39,7 @@
         "gates": [
            {
               "name": "s-dagger",
-              "target": 1
+              "targets": [1]
            }
         ]
      }

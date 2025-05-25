@@ -1,1 +1,32 @@
-{"steps": [{"index": 2,"gates": []},{"index": 1,"gates": [{"name": "ctrl-pauli-x","target": 1,"control": "0"}]},{"index": 0,"gates": [{"name": "hadamard","target": "0"}]}]}
+{
+    "steps": [
+        {
+            "index": 2,
+            "gates": []
+        },
+        {
+            "index": 1,
+            "gates": [
+                {
+                    "name": "pauli-x",
+                    "targets": [ 1 ],
+                    "controls": [
+						{
+							"target": 0,
+							"state": "1"
+						}
+					]
+                }
+            ]
+        },
+        {
+            "index": 0,
+            "gates": [
+                {
+                    "name": "hadamard",
+                    "targets": [ 0 ]
+                }
+            ]
+        }
+    ]
+}

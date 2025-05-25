@@ -5,16 +5,21 @@
       "gates": [
         {
           "name": "pauli-x",
-          "target": 0
-        },
-        {
-          "name": "ctrl-pauli-x",
-          "target": 2,
-          "control": 3
+          "targets": [0]
         },
         {
           "name": "pauli-x",
-          "target": 5
+          "targets": [2],
+          "controls": [
+            {
+              "target": 3,
+              "state": "1"
+            }
+          ]
+        },
+        {
+          "name": "pauli-x",
+          "targets": [5]
         }
       ]
     },
@@ -23,7 +28,7 @@
       "gates": [
         {
           "name": "hadamard",
-          "target": 2
+          "targets": [2]
         }
       ]
     }

@@ -13,7 +13,7 @@ fn deserialize_circuit_works() {
             \"gates\": [
               {
                 \"name\": \"pauli-y\",
-                \"target\": 0
+                \"targets\": [ 0 ]
               }
             ]
           },
@@ -22,15 +22,15 @@ fn deserialize_circuit_works() {
             \"gates\": [
               {
                 \"name\": \"pauli-x\",
-                \"target\": 0
+                \"targets\": [ 0 ]
               },
               {
                 \"name\": \"pauli-z\",
-                \"target\": 1
+                \"targets\": [ 1 ]
               },
               {
                 \"name\": \"t\",
-                \"target\": 3
+                \"targets\": [ 3 ]
               }
             ]
           }
